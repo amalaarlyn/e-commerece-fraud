@@ -1,0 +1,174 @@
+{
+  "return_id": "RET_CLAIM_9944",
+  "customer_id": "cust_d0ce0cad",
+  "graph_result": {
+    "customer_id": "cust_d0ce0cad",
+    "graph_score": 0.88,
+    "flags": [
+      {
+        "code": "SHARED_ATTRIBUTES",
+        "message": "Shares address, payment with 5 other account(s)",
+        "severity": 1.0
+      },
+      {
+        "code": "LARGE_CLUSTER",
+        "message": "Belongs to a connected cluster of 6 accounts",
+        "severity": 0.6
+      },
+      {
+        "code": "DENSE_COMMUNITY",
+        "message": "Part of a tightly-knit group where most accounts are interlinked (possible organized fraud ring)",
+        "severity": 1.0
+      }
+    ],
+    "nodes": [
+      {
+        "id": "cust_a3c27d4d",
+        "type": "customer",
+        "risk": 0.88
+      },
+      {
+        "id": "cust_b6a32fb4",
+        "type": "customer",
+        "risk": 0.88
+      },
+      {
+        "id": "cust_aacc2ab6",
+        "type": "customer",
+        "risk": 0.88
+      },
+      {
+        "id": "cust_13888c6b",
+        "type": "customer",
+        "risk": 0.88
+      },
+      {
+        "id": "cust_c8ce54a6",
+        "type": "customer",
+        "risk": 0.88
+      },
+      {
+        "id": "cust_d0ce0cad",
+        "type": "customer",
+        "risk": 0.88
+      }
+    ],
+    "edges": [
+      {
+        "source": "cust_a3c27d4d",
+        "target": "cust_13888c6b",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_a3c27d4d",
+        "target": "cust_aacc2ab6",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_a3c27d4d",
+        "target": "cust_b6a32fb4",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_a3c27d4d",
+        "target": "cust_c8ce54a6",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_a3c27d4d",
+        "target": "cust_d0ce0cad",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_b6a32fb4",
+        "target": "cust_13888c6b",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_b6a32fb4",
+        "target": "cust_aacc2ab6",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_b6a32fb4",
+        "target": "cust_c8ce54a6",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_b6a32fb4",
+        "target": "cust_d0ce0cad",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_aacc2ab6",
+        "target": "cust_13888c6b",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_aacc2ab6",
+        "target": "cust_c8ce54a6",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_aacc2ab6",
+        "target": "cust_d0ce0cad",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_13888c6b",
+        "target": "cust_c8ce54a6",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_13888c6b",
+        "target": "cust_d0ce0cad",
+        "relation": "address+payment",
+        "weight": 5.0
+      },
+      {
+        "source": "cust_c8ce54a6",
+        "target": "cust_d0ce0cad",
+        "relation": "address+payment",
+        "weight": 5.0
+      }
+    ]
+  },
+  "image_result": {
+    "customer_id": "cust_d0ce0cad",
+    "image_score": 0.95,
+    "return_id": "RET_CLAIM_9944",
+    "image_id": "IMG_9944_TAMPERED.JPG",
+    "flags": [
+      {
+        "code": "EXACT_DUPLICATE_IMAGE",
+        "message": "Identical image previously submitted with a different return claim",
+        "severity": 0.98
+      }
+    ]
+  },
+  "behavior_score": 0.4,
+  "final_score": 0.788,
+  "decision": {
+    "final_score": 0.788,
+    "decision": "MANUAL_REVIEW",
+    "expected_costs": {
+      "approve": 19.7,
+      "reject": 21.2,
+      "review": 8.0
+    },
+    "reasoning": "At final_score=0.788, expected cost of MANUAL_REVIEW ($8.0) is lowest, 11.7 cheaper than next best option (APPROVE, $19.7)."
+  }
+}

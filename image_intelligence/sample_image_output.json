@@ -1,0 +1,54 @@
+{
+  "customer_id": "CUST_4088_SUSPECT",
+  "image_score": 0.95,
+  "flags": [
+    {
+      "code": "EXACT_DUPLICATE_IMAGE",
+      "message": "Exact duplicate image detected (matches return claim 'RET_CLAIM_9001' from customer 'CUST_1001_LEGIT')",
+      "severity": 1.0
+    },
+    {
+      "code": "FEATURE_MATCH_REUSE",
+      "message": "Reused visual keypoints detected (83 matching ORB features found across claims)",
+      "severity": 1.0
+    }
+  ],
+  "return_id": "RET_CLAIM_9822",
+  "image_id": "IMG_9822_DUP.JPG",
+  "similarity_details": {
+    "max_similarity_score": 1.0,
+    "max_histogram_correlation": 1.0,
+    "max_orb_matches": 83,
+    "matched_customer_id": "CUST_1001_LEGIT",
+    "matched_return_id": "RET_CLAIM_9001",
+    "details": {
+      "histogram_correlation": 1.0,
+      "orb_matches": 83,
+      "orb_match_ratio": 1.0,
+      "orb_score": 1.0,
+      "combined_similarity": 1.0,
+      "is_exact_duplicate": true,
+      "is_near_duplicate": true
+    }
+  },
+  "manipulation_details": {
+    "edge_analysis": {
+      "edge_max_variance": 372.3,
+      "edge_median_variance": 287.27,
+      "edge_disparity_ratio": 1.3,
+      "edge_inconsistency_score": 0.0
+    },
+    "noise_analysis": {
+      "noise_mean_variance": 20.57,
+      "noise_std_variance": 10.6,
+      "noise_coef_variation": 0.5153,
+      "noise_inconsistency_score": 0.0
+    },
+    "ela_analysis": {
+      "ela_mean_delta": 39.92,
+      "ela_std_delta": 24.74,
+      "ela_discrepancy_score": 0.0
+    },
+    "overall_manipulation_score": 0.0
+  }
+}

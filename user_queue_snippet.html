@@ -1,0 +1,279 @@
+<!-- HERO SECTION: PROFILE & AI RISK GAUGE -->
+<div class="grid grid-cols-12 gap-lg">
+<div class="col-span-8 glass-card rounded-[16px] p-lg flex items-center gap-xxl relative overflow-hidden">
+<div class="absolute top-0 right-0 p-lg opacity-10">
+<span class="material-symbols-outlined text-[120px]">verified_user</span>
+</div>
+<div class="flex items-center gap-lg">
+
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Marcus Thorne</h2>
+<div class="flex gap-md mt-sm">
+<span class="px-md py-xs bg-surface-container-high rounded-full border border-outline-variant text-label font-label text-outline">ORDER: #PX-9921-00</span>
+<span class="px-md py-xs bg-surface-container-high rounded-full border border-outline-variant text-label font-label text-outline">CLAIM: #CL-88219-F</span>
+</div>
+<div class="flex gap-md mt-md">
+<div class="flex items-center gap-xs text-primary">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-body-sm">Greater London, UK</span>
+</div>
+<div class="flex items-center gap-xs text-tertiary">
+<span class="material-symbols-outlined text-sm">verified</span>
+<span class="text-body-sm">Prime Member (6 yrs)</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center border-l border-outline-variant pl-xxl">
+<div class="relative w-40 h-40">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-highest" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-width="12"></circle>
+<circle class="risk-gauge" cx="80" cy="80" fill="transparent" id="riskCircle" r="70" stroke="#5B8CFF" stroke-dasharray="440" stroke-dashoffset="66" stroke-width="12" style="stroke-dashoffset: 66;"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-display text-[42px] leading-none text-primary">85</span>
+<span class="text-label font-label text-outline uppercase">Risk Score</span>
+</div>
+</div>
+</div>
+</div>
+<!-- QUICK ACTIONS PANEL -->
+<div class="col-span-4 flex flex-col gap-md">
+<button class="flex-1 bg-error-container text-on-error-container rounded-xl flex items-center justify-between px-lg hover:brightness-110 transition-all group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-[32px]">block</span>
+<div class="text-left">
+<p class="font-headline-sm text-headline-sm">Reject Claim</p>
+<p class="text-label opacity-80">Flags: Fraudulent Activity</p>
+</div>
+</div>
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</button>
+<button class="flex-1 bg-surface-container text-primary border border-primary/20 rounded-xl flex items-center justify-between px-lg hover:bg-primary/10 transition-all group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-[32px]">forward_to_inbox</span>
+<div class="text-left">
+<p class="font-headline-sm text-headline-sm text-on-surface">Escalate Case</p>
+<p class="text-label text-outline">Request Senior Review</p>
+</div>
+</div>
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</button>
+<button class="flex-1 bg-tertiary-container text-on-tertiary-container rounded-xl flex items-center justify-between px-lg hover:brightness-110 transition-all group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div class="text-left">
+<p class="font-headline-sm text-headline-sm">Approve Claim</p>
+<p class="text-label opacity-80">Manual override required</p>
+</div>
+</div>
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- COMPOSITE AI INTELLIGENCE PANEL (Bento Grid) -->
+<div class="grid grid-cols-12 gap-lg">
+<!-- 1. Behavioral Intelligence -->
+<div class="col-span-4 glass-card rounded-[16px] p-lg flex flex-col">
+<div class="flex items-center justify-between mb-lg">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">psychology</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Behavioral</h3>
+</div>
+<span class="px-md py-xs bg-primary/10 text-primary text-[10px] font-bold rounded-full">HIGH CONFIDENCE</span>
+</div>
+<div class="space-y-md flex-1">
+<div class="flex justify-between items-end">
+<div>
+<p class="text-label text-outline uppercase mb-xs">Return Ratio</p>
+<p class="font-metric-lg text-metric-lg text-error">72%</p>
+</div>
+<div class="text-right">
+<p class="text-label text-outline uppercase mb-xs">Purchases/Mo</p>
+<p class="font-metric-lg text-metric-lg text-on-surface">1.2</p>
+</div>
+</div>
+<div class="pt-md border-t border-outline-variant">
+<p class="text-label text-outline uppercase mb-md">Claim Timeline</p>
+<div class="flex items-center justify-between relative px-2">
+<div class="absolute left-0 right-0 h-0.5 bg-outline-variant top-1/2 -translate-y-1/2"></div>
+<div class="relative w-3 h-3 rounded-full bg-primary z-10"></div>
+<div class="relative w-3 h-3 rounded-full bg-primary z-10"></div>
+<div class="relative w-3 h-3 rounded-full bg-primary z-10"></div>
+<div class="relative w-4 h-4 rounded-full bg-error z-10 border-2 border-surface shadow-[0_0_10px_#ffb4ab]"></div>
+</div>
+<div class="flex justify-between mt-sm text-[10px] text-outline-variant font-mono">
+<span class="">JAN</span>
+<span class="">MAR</span>
+<span class="">MAY</span>
+<span class="">JUL</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 2. Image Intelligence -->
+<div class="col-span-4 glass-card rounded-[16px] p-lg flex flex-col">
+<div class="flex items-center justify-between mb-lg">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary">image_search</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Image Intel</h3>
+</div>
+<span class="px-md py-xs bg-secondary/10 text-secondary text-[10px] font-bold rounded-full">MANIPULATION DETECTED</span>
+</div>
+<div class="relative flex-1 rounded-xl overflow-hidden group">
+<img class="w-full h-full object-cover" data-alt="A top-down professional shot of a modern high-end smartphone with a cracked screen, placed on a dark carbon fiber surface. Overlaid with a heat-map of purple and red glowing highlights indicating digital photo manipulation on the screen area. Professional, forensic, high-tech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC60MKypQxHKC5_BDySzTyBew3TMYeuxCavRdaSUr4SoPYPn0XEy2Tx6EIM-ZeZ25R5966DHzzsa-dWFrP8I1U-j0-5xeRu4zw5Payu6NBKFSYbElR7KF3JEvFXJfawpa3NLm4qFhZjdyh5VoIm-Vu48gOp83gFrfRZEEtNMHk-cWqRbiN06JMGfLALpZunvuDbqam7_XwivlJF2B6r4zZmief7YWqSbvr3bXOweIcRye8m6WBIXxhmerJxDSDQHB9MiPyjlYltNX0">
+<div class="absolute inset-0 bg-secondary/20 mix-blend-overlay"></div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-surface/60 backdrop-blur-sm cursor-zoom-in">
+<p class="text-body-sm font-bold text-secondary">View Heatmap Details</p>
+</div>
+<div class="absolute bottom-md left-md bg-surface/80 backdrop-blur-md px-md py-xs rounded-lg border border-outline-variant">
+<p class="font-metric-sm text-metric-sm text-secondary">92% Match</p>
+</div>
+</div>
+</div>
+<!-- 3. Network Intelligence -->
+<div class="col-span-4 glass-card rounded-[16px] p-lg flex flex-col">
+<div class="flex items-center justify-between mb-lg">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-tertiary">hub</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Network Graph</h3>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-tertiary">open_in_full</span>
+</div>
+<div class="flex-1 bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden relative">
+
+<!-- Overlay Labels for the Graph Concept -->
+<div class="absolute top-md right-md flex flex-col gap-xs">
+<div class="flex items-center gap-xs">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="text-[10px] text-outline">Shared Device</span>
+</div>
+<div class="flex items-center gap-xs">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<span class="text-[10px] text-outline">Known Fraud Node</span>
+</div>
+</div>
+<div class="absolute inset-0 pointer-events-none border-[12px] border-surface-container-lowest opacity-50"></div>
+</div>
+</div>
+</div>
+<!-- EVIDENCE FUSION ENGINE & EXPLAINABILITY -->
+<div class="grid grid-cols-12 gap-lg">
+<div class="col-span-7 glass-card rounded-[16px] p-lg">
+<div class="flex items-center justify-between mb-xl">
+<div class="flex items-center gap-md">
+<div class="p-sm bg-primary/20 rounded-lg">
+<span class="material-symbols-outlined text-primary">analytics</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Evidence Fusion Engine</h3>
+<p class="text-body-sm text-outline">Multi-modal probability calibration</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-label text-outline uppercase">Probability</p>
+<p class="font-metric-lg text-metric-lg text-error">0.852</p>
+</div>
+</div>
+<div class="space-y-lg">
+<div class="space-y-xs">
+<div class="flex justify-between text-label">
+<span class="text-on-surface">Behavioral Patterns</span>
+<span class="text-outline">Weight: 0.35</span>
+</div>
+<div class="h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="fusion-bar-fill h-full bg-primary" style="width: 85%;"></div>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between text-label">
+<span class="text-on-surface">Visual Anomaly Detection</span>
+<span class="text-outline">Weight: 0.45</span>
+</div>
+<div class="h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="fusion-bar-fill h-full bg-secondary" style="width: 92%;"></div>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between text-label">
+<span class="text-on-surface">Social/Network Correlation</span>
+<span class="text-outline">Weight: 0.20</span>
+</div>
+<div class="h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="fusion-bar-fill h-full bg-tertiary" style="width: 68%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="col-span-5 glass-card rounded-[16px] p-lg">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-lg">Why This Claim Was Flagged</h3>
+<div class="flex flex-wrap gap-md">
+<div class="flex items-center gap-md p-md bg-surface-container-high rounded-xl border border-outline-variant w-full">
+<span class="material-symbols-outlined text-error">warning</span>
+<span class="text-body-sm text-on-surface">9 premium electronics returned in last 60 days</span>
+</div>
+<div class="flex items-center gap-md p-md bg-surface-container-high rounded-xl border border-outline-variant w-full">
+<span class="material-symbols-outlined text-secondary">view_in_ar</span>
+<span class="text-body-sm text-on-surface">92% manipulation confidence in screen pixels</span>
+</div>
+<div class="flex items-center gap-md p-md bg-surface-container-high rounded-xl border border-outline-variant w-full">
+<span class="material-symbols-outlined text-tertiary">share_location</span>
+<span class="text-body-sm text-on-surface">Device ID matches blacklisted terminal in Bristol</span>
+</div>
+<div class="flex items-center gap-md p-md bg-surface-container-high rounded-xl border border-outline-variant w-full">
+<span class="material-symbols-outlined text-primary">speed</span>
+<span class="text-body-sm text-on-surface">Return requested 4 minutes after delivery confirmation</span>
+</div>
+</div>
+</div>
+</div>
+<!-- MODEL ANALYTICS & ROC CURVE -->
+<div class="glass-card rounded-[16px] p-lg">
+<div class="flex items-center justify-between mb-xl">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Model Performance Benchmarks</h3>
+<div class="flex gap-lg">
+<div class="flex items-center gap-xs">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-label text-outline">Fusion Model (v2.4)</span>
+</div>
+<div class="flex items-center gap-xs">
+<div class="w-3 h-3 rounded-full border border-outline"></div>
+<span class="text-label text-outline">Baseline (v2.1)</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-xxl h-64">
+<div class="col-span-8 relative">
+<!-- ROC CURVE SIMULATION -->
+<div class="absolute inset-0 flex items-end">
+<div class="w-full h-full border-l border-b border-outline-variant relative">
+<!-- Baseline Line -->
+<svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+<line stroke="#434653" stroke-dasharray="4" stroke-width="1" x1="0" x2="100%" y1="100%" y2="0"></line>
+<!-- Fusion Curve -->
+<path class="opacity-80" d="M 0 255 Q 0 0 547 0" fill="none" id="rocPath" stroke="#5B8CFF" stroke-width="2"></path>
+</svg>
+<!-- Grid Lines -->
+<div class="absolute left-0 bottom-0 w-full flex justify-between px-2 pt-2 text-[8px] text-outline-variant">
+<span class="">0.0</span><span class="">0.2</span><span class="">0.4</span><span class="">0.6</span><span class="">0.8</span><span class="">1.0</span>
+</div>
+</div>
+</div>
+<div class="absolute -left-8 top-1/2 -rotate-90 text-[10px] text-outline font-bold">TPR</div>
+<div class="absolute bottom-[-24px] left-1/2 -translate-x-1/2 text-[10px] text-outline font-bold">FPR</div>
+</div>
+<div class="col-span-4 flex flex-col justify-center gap-lg border-l border-outline-variant pl-xxl">
+<div>
+<p class="text-label text-outline uppercase mb-xs">Fusion AUC</p>
+<div class="flex items-center gap-md">
+<p class="font-display text-[32px] text-primary">0.96</p>
+<span class="text-tertiary text-label font-bold">↑ 4.2%</span>
+</div>
+</div>
+<div>
+<p class="text-label text-outline uppercase mb-xs">Baseline AUC</p>
+<p class="font-display text-[32px] text-outline-variant">0.92</p>
+</div>
+</div>
+</div>
+</div>

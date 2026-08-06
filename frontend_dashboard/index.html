@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Return Intelligence — Multi-Signal Fraud Detection</title>
+<meta name="description" content="A cost-asymmetric, multi-modal fraud detection dashboard combining behavioral modeling, image forensics, and graph-based ring detection.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#10141B;
+    --surface:#171D26;
+    --card:#1D2530;
+    --card-hover:#232C39;
+    --border:#2B3441;
+    --text:#E8ECF2;
+    --text-muted:#8B94A6;
+    --text-faint:#5B6474;
+    --accent:#6C8CFF;
+    --accent-dim:#3B4A80;
+    --accent-glow:rgba(108,140,255,0.12);
+    --safe:#4FAE8A;
+    --safe-dim:#1E332B;
+    --watch:#D6A24A;
+    --watch-dim:#3A2F1B;
+    --deny:#D46A5F;
+    --deny-dim:#3A2320;
+    --purple:#B47EE5;
+    --purple-dim:#3A2D4A;
+    --teal:#5FC2C9;
+    --teal-dim:#1E3333;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Space Grotesk', sans-serif;
+    --radius: 12px;
+    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:var(--display);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  ::selection{background:var(--accent-dim); color:var(--text);}
+
+  /* ============================================================
+     ANIMATIONS
+     ============================================================ */
+  @keyframes fadeInUp{
+    from{opacity:0; transform:translateY(18px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  @keyframes slideInLeft{
+    from{opacity:0; transform:translateX(-24px);}
+    to{opacity:1; transform:translateX(0);}
+  }
+  @keyframes pulse-glow{
+    0%,100%{box-shadow: 0 0 0 0 var(--accent-glow);}
+    50%{box-shadow: 0 0 20px 6px var(--accent-glow);}
+  }
+  @keyframes shimmer{
+    0%{background-position:-200% 0;}
+    100%{background-position:200% 0;}
+  }
+  @keyframes countUp{
+    from{opacity:0; transform:scale(0.85);}
+    to{opacity:1; transform:scale(1);}
+  }
+  .animate-in{animation: fadeInUp 0.45s ease both;}
+  .animate-in-delay-1{animation-delay:0.08s;}
+  .animate-in-delay-2{animation-delay:0.16s;}
+  .animate-in-delay-3{animation-delay:0.24s;}
+  .animate-in-delay-4{animation-delay:0.32s;}
+  .animate-in-delay-5{animation-delay:0.40s;}
+
+  /* ============================================================
+     TOP BAR
+     ============================================================ */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 28px;
+    border-bottom:1px solid var(--border);
+    background:var(--surface);
+    position:sticky; top:0; z-index:100;
+    backdrop-filter:blur(12px);
+  }
+  .topbar-left{display:flex; align-items:center; gap:24px;}
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:8px;
+    background:linear-gradient(135deg, var(--accent), #4A5FD9);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-weight:700; font-size:13px; color:#fff;
+    transition: transform var(--transition);
+  }
+  .brand-mark:hover{transform:rotate(-8deg) scale(1.08);}
+  .brand-name{font-weight:600; font-size:15px; letter-spacing:-0.01em;}
+  .brand-sub{font-size:10.5px; color:var(--text-faint); font-family:var(--mono); margin-top:1px;}
+  .topbar-right{display:flex; align-items:center; gap:28px;}
+
+  /* nav tabs */
+  .nav-tabs{display:flex; gap:4px; background:var(--ink); border-radius:8px; padding:3px;}
+  .nav-tab{
+    font-family:var(--mono); font-size:11.5px; font-weight:500;
+    padding:7px 16px; border-radius:6px; cursor:pointer;
+    color:var(--text-muted); border:none; background:none;
+    transition: all var(--transition);
+    letter-spacing:0.02em; text-transform:uppercase;
+  }
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{
+    background:var(--accent-dim); color:var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  /* topbar stats */
+  .topbar-stats{display:flex; gap:28px;}
+  .topstat{text-align:right;}
+  .topstat .val{font-family:var(--mono); font-weight:600; font-size:15px;}
+  .topstat .lbl{font-size:9.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; margin-top:1px;}
+  .topstat.g .val{color:var(--safe);}
+  .topstat.r .val{color:var(--deny);}
+
+  /* ============================================================
+     VIEW CONTAINERS
+     ============================================================ */
+  .view{display:none; min-height:calc(100vh - 58px);}
+  .view.active{display:block;}
+  .view-console.active{display:grid;}
+
+  /* ============================================================
+     CONSOLE VIEW — LAYOUT
+     ============================================================ */
+  .view-console{grid-template-columns:300px 1fr;}
+
+  /* queue sidebar */
+  .queue{
+    border-right:1px solid var(--border);
+    background:var(--surface);
+    padding:16px 0;
+    overflow-y:auto;
+    max-height:calc(100vh - 58px);
+    position:sticky; top:58px;
+  }
+  .queue-header{
+    padding:0 20px 12px;
+    font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.08em;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .queue-item{
+    padding:13px 20px;
+    border-left:3px solid transparent;
+    cursor:pointer;
+    transition:all 0.15s ease;
+  }
+  .queue-item:hover{background:var(--card);}
+  .queue-item.active{background:var(--card); border-left-color:var(--accent);}
+  .qi-top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;}
+  .qi-id{font-family:var(--mono); font-size:12px; color:var(--text-muted);}
+  .qi-tier{
+    font-family:var(--mono); font-size:9.5px; font-weight:600; padding:2px 7px; border-radius:20px;
+    text-transform:uppercase; letter-spacing:.04em;
+  }
+  .qi-tier.approve{background:var(--safe-dim); color:var(--safe);}
+  .qi-tier.friction{background:var(--watch-dim); color:var(--watch);}
+  .qi-tier.deny{background:var(--deny-dim); color:var(--deny);}
+  .qi-desc{font-size:12.5px; color:var(--text-muted); line-height:1.4;}
+  .qi-value{font-family:var(--mono); font-size:11px; color:var(--text-faint); margin-top:4px;}
+
+  /* main panel */
+  .main{padding:26px 32px 48px; max-width:1080px;}
+  .claim-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px;}
+  .claim-head h1{font-size:22px; font-weight:600; letter-spacing:-0.01em;}
+  .claim-head .meta{font-family:var(--mono); font-size:12px; color:var(--text-muted); margin-top:6px;}
+  .claim-head .meta span{color:var(--text);}
+  .decision-pill{
+    font-family:var(--mono); font-weight:600; font-size:13px; padding:8px 16px; border-radius:8px;
+    text-align:center; min-width:150px;
+  }
+  .decision-pill.approve{background:var(--safe-dim); color:var(--safe); border:1px solid #2E4A3D;}
+  .decision-pill.friction{background:var(--watch-dim); color:var(--watch); border:1px solid #4A3B22;}
+  .decision-pill.deny{background:var(--deny-dim); color:var(--deny); border:1px solid #4A2C28;}
+  .decision-pill .sub{font-size:10px; opacity:.75; font-weight:400; margin-top:2px;}
+
+  /* composite meter */
+  .composite{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px 22px; margin-bottom:22px;
+  }
+  .composite-label{
+    display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;
+  }
+  .composite-label h3{font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:600;}
+  .composite-score{font-family:var(--mono); font-size:26px; font-weight:700;}
+  .meter-track{
+    display:flex; height:14px; border-radius:8px; overflow:hidden; background:#131820;
+    border:1px solid var(--border);
+  }
+  .meter-seg{height:100%; transition:width .4s ease;}
+  .meter-seg.behavioral{background:#6C8CFF;}
+  .meter-seg.image{background:#B47EE5;}
+  .meter-seg.network{background:#5FC2C9;}
+  .meter-legend{display:flex; gap:18px; margin-top:11px;}
+  .legend-item{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text-muted);}
+  .legend-dot{width:8px; height:8px; border-radius:2px;}
+  .legend-dot.behavioral{background:#6C8CFF;}
+  .legend-dot.image{background:#B47EE5;}
+  .legend-dot.network{background:#5FC2C9;}
+  .legend-item b{color:var(--text); font-family:var(--mono); font-weight:600;}
+
+  /* signal cards */
+  .signals{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:22px;}
+  .signal-card{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px;
+    display:flex; flex-direction:column; gap:10px;
+    transition: border-color var(--transition), transform var(--transition);
+  }
+  .signal-card:hover{border-color:var(--accent-dim); transform:translateY(-2px);}
+  .signal-top{display:flex; justify-content:space-between; align-items:center;}
+  .signal-name{font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted);}
+  .signal-score{font-family:var(--mono); font-weight:700; font-size:20px;}
+  .signal-body{font-size:12.5px; color:var(--text-muted); line-height:1.5;}
+  .signal-body b{color:var(--text); font-weight:500;}
+  .signal-visual{
+    border-radius:8px; overflow:hidden; border:1px solid var(--border);
+    height:120px; display:flex; align-items:center; justify-content:center;
+    background:#12161D;
+  }
+  .signal-visual img{width:100%; height:100%; object-fit:cover;}
+  .seq-viz{display:flex; align-items:flex-end; gap:3px; height:100%; padding:12px; width:100%;}
+  .seq-bar{flex:1; background:var(--accent-dim); border-radius:2px 2px 0 0; position:relative; transition: height 0.5s ease;}
+  .seq-bar.ret{background:var(--deny-dim);}
+  .seq-bar.ret::after{content:''; position:absolute; top:-4px; left:50%; transform:translateX(-50%); width:5px; height:5px; border-radius:50%; background:var(--deny);}
+  .mini-graph{width:100%; height:100%;}
+
+  /* explanation */
+  .explain{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 22px; margin-bottom:22px;
+  }
+  .explain h3{font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:600; margin-bottom:12px;}
+  .explain ul{list-style:none;}
+  .explain li{
+    display:flex; gap:10px; font-size:13px; color:var(--text); padding:7px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .explain li:last-child{border-bottom:none;}
+  .explain li .bullet{color:var(--accent); font-family:var(--mono); flex-shrink:0;}
+
+  /* performance strip */
+  .perf{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px;
+  }
+  .perf h3{font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:600; margin-bottom:16px;}
+  .perf-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:center;}
+  .perf-chart-wrap{height:200px;}
+  .perf-notes{display:flex; flex-direction:column; gap:12px;}
+  .perf-note{font-size:12.5px; color:var(--text-muted); line-height:1.5; padding-left:14px; border-left:2px solid var(--border);}
+  .perf-note b{color:var(--text); font-family:var(--mono);}
+
+  /* ============================================================
+     DOCUMENTATION VIEW
+     ============================================================ */
+  .docs-container{
+    max-width:960px;
+    margin:0 auto;
+    padding:40px 32px 80px;
+  }
+
+  /* hero section */
+  .docs-hero{
+    text-align:center;
+    margin-bottom:48px;
+    padding:48px 32px;
+    background: linear-gradient(165deg, rgba(108,140,255,0.08) 0%, rgba(180,126,229,0.06) 40%, rgba(95,194,201,0.05) 100%);
+    border-radius:16px;
+    border:1px solid var(--border);
+    position:relative;
+    overflow:hidden;
+  }
+  .docs-hero::before{
+    content:'';
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:radial-gradient(ellipse at 30% 20%, rgba(108,140,255,0.1) 0%, transparent 60%),
+               radial-gradient(ellipse at 70% 80%, rgba(180,126,229,0.08) 0%, transparent 50%);
+    pointer-events:none;
+  }
+  .docs-hero h1{
+    font-size:32px; font-weight:700; letter-spacing:-0.02em;
+    margin-bottom:12px; position:relative;
+    background:linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .docs-hero .subtitle{
+    font-size:15px; color:var(--text-muted); line-height:1.6;
+    max-width:640px; margin:0 auto 20px; position:relative;
+  }
+  .docs-hero .hero-badges{
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+    position:relative;
+  }
+  .hero-badge{
+    font-family:var(--mono); font-size:10.5px; font-weight:600;
+    padding:5px 14px; border-radius:20px;
+    text-transform:uppercase; letter-spacing:0.04em;
+  }
+  .hero-badge.behavioral{background:var(--accent-dim); color:var(--accent);}
+  .hero-badge.image{background:var(--purple-dim); color:var(--purple);}
+  .hero-badge.network{background:var(--teal-dim); color:var(--teal);}
+
+  /* docs section */
+  .docs-section{
+    margin-bottom:32px;
+    animation: fadeInUp 0.45s ease both;
+  }
+  .docs-section-header{
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:16px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--border);
+  }
+  .docs-section-icon{
+    width:36px; height:36px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; flex-shrink:0;
+  }
+  .docs-section-icon.problem{background:var(--deny-dim); color:var(--deny);}
+  .docs-section-icon.research{background:var(--accent-dim); color:var(--accent);}
+  .docs-section-icon.arch{background:var(--purple-dim); color:var(--purple);}
+  .docs-section-icon.results{background:var(--safe-dim); color:var(--safe);}
+  .docs-section-icon.method{background:var(--watch-dim); color:var(--watch);}
+  .docs-section-icon.run{background:var(--teal-dim); color:var(--teal);}
+  .docs-section h2{
+    font-size:18px; font-weight:600; letter-spacing:-0.01em;
+  }
+
+  .docs-content{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:22px 24px;
+    font-size:14px; line-height:1.7;
+    color:var(--text-muted);
+    transition: border-color var(--transition);
+  }
+  .docs-content:hover{border-color:var(--accent-dim);}
+  .docs-content p{margin-bottom:14px;}
+  .docs-content p:last-child{margin-bottom:0;}
+  .docs-content strong{color:var(--text); font-weight:600;}
+  .docs-content em{color:var(--accent); font-style:normal; font-family:var(--mono); font-size:13px;}
+
+  /* stat highlight */
+  .stat-highlight{
+    display:inline-flex; align-items:baseline; gap:4px;
+    font-family:var(--mono); font-weight:700;
+    font-size:16px; color:var(--deny);
+    padding:1px 3px;
+  }
+  .stat-highlight.safe{color:var(--safe);}
+  .stat-highlight.accent{color:var(--accent);}
+
+  /* gap cards */
+  .gap-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-top:16px;}
+  .gap-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px;
+    transition: all var(--transition);
+  }
+  .gap-card:hover{border-color:var(--accent-dim); transform:translateY(-2px);}
+  .gap-card .gap-num{
+    font-family:var(--mono); font-size:11px; font-weight:700;
+    color:var(--accent); margin-bottom:8px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .gap-card .gap-num::after{
+    content:''; flex:1; height:1px; background:var(--border);
+  }
+  .gap-card h4{font-size:13px; font-weight:600; color:var(--text); margin-bottom:6px;}
+  .gap-card p{font-size:12px; color:var(--text-muted); line-height:1.5;}
+  .gap-tag{
+    font-family:var(--mono); font-size:9px; text-transform:uppercase;
+    padding:2px 8px; border-radius:10px; letter-spacing:0.04em; margin-top:8px; display:inline-block;
+  }
+  .gap-tag.novel{background:var(--safe-dim); color:var(--safe);}
+  .gap-tag.ext{background:var(--watch-dim); color:var(--watch);}
+
+  /* architecture diagram */
+  .arch-diagram{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:28px;
+    margin-top:16px;
+    font-family:var(--mono);
+    font-size:12px;
+  }
+  .arch-flow{
+    display:flex; flex-direction:column; gap:0;
+    align-items:center;
+  }
+  .arch-input{
+    background:var(--ink);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 24px;
+    color:var(--text-muted);
+    font-size:12px;
+    margin-bottom:16px;
+  }
+  .arch-modules{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+    width:100%;
+    margin-bottom:8px;
+  }
+  .arch-module{
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px;
+    text-align:center;
+    transition: all var(--transition);
+    position:relative;
+  }
+  .arch-module:hover{
+    border-color:var(--accent-dim);
+    transform:translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .arch-module.m1{border-top:3px solid var(--accent);}
+  .arch-module.m2{border-top:3px solid var(--purple);}
+  .arch-module.m3{border-top:3px solid var(--teal);}
+  .arch-module .mod-label{font-weight:600; font-size:11px; color:var(--text); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.04em;}
+  .arch-module .mod-tech{font-size:10px; color:var(--text-faint);}
+  .arch-module .mod-output{
+    font-size:9px; color:var(--text-muted);
+    margin-top:8px; padding-top:8px;
+    border-top:1px solid var(--border);
+  }
+  .arch-arrow{
+    width:2px; height:20px; background:var(--border);
+    position:relative;
+  }
+  .arch-arrow::after{
+    content:'▼'; position:absolute; bottom:-14px; left:50%;
+    transform:translateX(-50%); color:var(--text-faint); font-size:10px;
+  }
+  .arch-fusion{
+    background: linear-gradient(135deg, rgba(108,140,255,0.1), rgba(180,126,229,0.08), rgba(95,194,201,0.06));
+    border:1px solid var(--accent-dim);
+    border-radius:10px;
+    padding:14px 28px;
+    text-align:center;
+    margin:16px 0;
+    color:var(--text);
+    font-weight:600;
+    font-size:12px;
+  }
+  .arch-tiers{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+    width:100%;
+  }
+  .arch-tier{
+    text-align:center;
+    padding:12px;
+    border-radius:8px;
+    font-size:11px;
+    font-weight:600;
+  }
+  .arch-tier.t-approve{background:var(--safe-dim); color:var(--safe); border:1px solid #2E4A3D;}
+  .arch-tier.t-friction{background:var(--watch-dim); color:var(--watch); border:1px solid #4A3B22;}
+  .arch-tier.t-deny{background:var(--deny-dim); color:var(--deny); border:1px solid #4A2C28;}
+  .arch-tier .tier-sub{font-weight:400; font-size:9.5px; margin-top:3px; opacity:0.7;}
+
+  /* results cards */
+  .results-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-top:16px;}
+  .result-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:20px;
+    position:relative;
+    overflow:hidden;
+    transition: all var(--transition);
+  }
+  .result-card:hover{border-color:var(--accent-dim); transform:translateY(-2px);}
+  .result-card::before{
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  }
+  .result-card.rc-behavioral::before{background:var(--accent);}
+  .result-card.rc-image::before{background:var(--purple);}
+  .result-card.rc-network::before{background:var(--teal);}
+  .result-card .rc-title{
+    font-family:var(--mono); font-size:10.5px; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.05em;
+    margin-bottom:14px;
+  }
+  .result-card.rc-behavioral .rc-title{color:var(--accent);}
+  .result-card.rc-image .rc-title{color:var(--purple);}
+  .result-card.rc-network .rc-title{color:var(--teal);}
+  .rc-metric{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:6px 0;
+    border-bottom:1px solid var(--border);
+    font-size:12px;
+  }
+  .rc-metric:last-child{border-bottom:none;}
+  .rc-metric .rc-label{color:var(--text-muted);}
+  .rc-metric .rc-val{font-family:var(--mono); font-weight:600; color:var(--text);}
+  .rc-metric .rc-val.better{color:var(--safe);}
+  .rc-metric .rc-val.baseline{color:var(--text-faint);}
+  .rc-improvement{
+    margin-top:12px; padding-top:10px;
+    border-top:1px solid var(--border);
+    font-size:11.5px; color:var(--text-muted); line-height:1.5;
+  }
+  .rc-improvement b{color:var(--text);}
+
+  /* method note */
+  .method-note{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--watch);
+    border-radius:2px 10px 10px 2px;
+    padding:18px 22px;
+    margin-top:16px;
+    font-size:13px; line-height:1.7;
+    color:var(--text-muted);
+  }
+  .method-note strong{color:var(--text);}
+  .method-note .method-stat{
+    font-family:var(--mono); font-weight:600; color:var(--watch);
+  }
+
+  /* code block */
+  .docs-code{
+    background:var(--ink);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:18px 20px;
+    margin-top:14px;
+    font-family:var(--mono);
+    font-size:12px;
+    line-height:1.8;
+    color:var(--text-muted);
+    overflow-x:auto;
+  }
+  .docs-code .cmd{color:var(--safe);}
+  .docs-code .comment{color:var(--text-faint);}
+  .docs-code .dir{color:var(--accent);}
+
+  /* folder table */
+  .folder-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:14px;
+    font-size:12.5px;
+  }
+  .folder-table th{
+    text-align:left; padding:10px 14px;
+    font-family:var(--mono); font-size:10.5px;
+    color:var(--text-faint); text-transform:uppercase; letter-spacing:0.06em;
+    border-bottom:1px solid var(--border);
+    background:var(--surface);
+  }
+  .folder-table td{
+    padding:12px 14px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  .folder-table td:first-child{
+    font-family:var(--mono); font-weight:600; color:var(--accent);
+    white-space:nowrap;
+  }
+  .folder-table td:last-child{
+    color:var(--text-muted); line-height:1.5;
+  }
+  .folder-table tr:hover td{background:var(--surface);}
+
+  /* scrollbar */
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:4px;}
+
+  /* responsive */
+  @media(max-width:900px){
+    .view-console.active{grid-template-columns:1fr;}
+    .queue{max-height:220px; border-right:none; border-bottom:1px solid var(--border);}
+    .signals{grid-template-columns:1fr;}
+    .gap-grid, .results-grid, .arch-modules, .arch-tiers{grid-template-columns:1fr;}
+    .perf-grid{grid-template-columns:1fr;}
+    .topbar-stats{display:none;}
+    .docs-hero h1{font-size:24px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     TOP BAR
+     ============================================================ -->
+<div class="topbar" id="topbar">
+  <div class="topbar-left">
+    <div class="brand">
+      <div class="brand-mark">RI</div>
+      <div>
+        <div class="brand-name">Return Intelligence</div>
+        <div class="brand-sub">multi-signal fraud detection</div>
+      </div>
+    </div>
+    <div class="nav-tabs" id="nav-tabs">
+      <button class="nav-tab active" data-view="console" id="tab-console">Console</button>
+      <button class="nav-tab" data-view="docs" id="tab-docs">Documentation</button>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-stats" id="topbar-stats">
+      <div class="topstat"><div class="val" id="stat-total">247</div><div class="lbl">Claims today</div></div>
+      <div class="topstat g"><div class="val" id="stat-approved">211</div><div class="lbl">Auto-approved</div></div>
+      <div class="topstat"><div class="val" id="stat-friction">24</div><div class="lbl">Soft friction</div></div>
+      <div class="topstat r"><div class="val" id="stat-denied">12</div><div class="lbl">Denied</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     CONSOLE VIEW
+     ============================================================ -->
+<div class="view view-console active" id="view-console">
+  <div class="queue" id="queue">
+    <div class="queue-header"><span>Claim Queue</span><span id="queue-count">6</span></div>
+    <!-- populated by JS -->
+  </div>
+  <div class="main" id="main">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<!-- ============================================================
+     DOCUMENTATION VIEW
+     ============================================================ -->
+<div class="view view-docs" id="view-docs">
+  <div class="docs-container">
+
+    <!-- Hero -->
+    <div class="docs-hero animate-in" id="docs-hero">
+      <h1>Return Fraud Detection System</h1>
+      <p class="subtitle">A cost-asymmetric, multi-modal fraud detection framework for e-commerce return claims, combining behavioral sequence modeling, image forensics, and graph-based fraud-ring detection.</p>
+      <div class="hero-badges">
+        <span class="hero-badge behavioral">Behavioral LSTM</span>
+        <span class="hero-badge image">Image Forensics</span>
+        <span class="hero-badge network">Graph Neural Network</span>
+      </div>
+    </div>
+
+    <!-- Problem -->
+    <div class="docs-section animate-in animate-in-delay-1" id="docs-problem">
+      <div class="docs-section-header">
+        <div class="docs-section-icon problem">⚠</div>
+        <h2>The Problem</h2>
+      </div>
+      <div class="docs-content">
+        <p>Online retailers lose an estimated <span class="stat-highlight">$101B</span> annually to return fraud — including wardrobing, item-not-received abuse, falsified damage claims, receipt manipulation, and organized return rings.</p>
+        <p>The core challenge is not just detecting fraud, but doing so <strong>without alienating the 96–98% of customers who are legitimate</strong>. The business cost of a false positive (blocking a genuine customer) often exceeds the cost of a single missed fraud case.</p>
+      </div>
+    </div>
+
+    <!-- Research Gap -->
+    <div class="docs-section animate-in animate-in-delay-2" id="docs-gap">
+      <div class="docs-section-header">
+        <div class="docs-section-icon research">◈</div>
+        <h2>Research Gap</h2>
+      </div>
+      <div class="docs-content">
+        <p>Prior work (closest: Ravala & Asadinia, 2025 — <em>"Automated Detection of Fraudulent Returns in E-Commerce"</em>) uses a Customer Return Score combined with Random Forest / SVM / Logistic Regression on tabular behavioral data.</p>
+        <p>This project extends that work in <strong>three ways absent from the existing literature</strong>:</p>
+        <div class="gap-grid">
+          <div class="gap-card">
+            <div class="gap-num">01</div>
+            <h4>Image Forensics</h4>
+            <p>Damage-claim photo verification using Error Level Analysis (ELA) + CNN for splice detection and perceptual hashing for reused/stock images.</p>
+            <span class="gap-tag novel">Novel contribution</span>
+          </div>
+          <div class="gap-card">
+            <div class="gap-num">02</div>
+            <h4>Graph-Based Ring Detection</h4>
+            <p>GraphSAGE model leveraging device/address adjacency networks to identify organized fraud rings invisible to individual-account analysis.</p>
+            <span class="gap-tag novel">Novel contribution</span>
+          </div>
+          <div class="gap-card">
+            <div class="gap-num">03</div>
+            <h4>Cost-Asymmetric Optimization</h4>
+            <p>Training objective directly encodes the false-positive business penalty — prior work optimizes standard accuracy/F1 only.</p>
+            <span class="gap-tag ext">Extension</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="docs-section animate-in animate-in-delay-3" id="docs-arch">
+      <div class="docs-section-header">
+        <div class="docs-section-icon arch">⬡</div>
+        <h2>System Architecture</h2>
+      </div>
+      <div class="docs-content">
+        <p>Incoming return claims are processed through three independent signal modules, whose risk scores are then fused into a composite score driving a three-tier decision.</p>
+        <div class="arch-diagram">
+          <div class="arch-flow">
+            <div class="arch-input">📦 Return Claim Submitted</div>
+            <div class="arch-arrow"></div>
+            <div class="arch-modules">
+              <div class="arch-module m1">
+                <div class="mod-label">Module 1: Behavioral</div>
+                <div class="mod-tech">Order / return sequences</div>
+                <div class="mod-output">→ risk score (LSTM)</div>
+              </div>
+              <div class="arch-module m2">
+                <div class="mod-label">Module 2: Image</div>
+                <div class="mod-tech">ELA-CNN + perceptual hash</div>
+                <div class="mod-output">→ risk score (CNN)</div>
+              </div>
+              <div class="arch-module m3">
+                <div class="mod-label">Module 3: Network</div>
+                <div class="mod-tech">Device / address graph</div>
+                <div class="mod-output">→ risk score (GraphSAGE)</div>
+              </div>
+            </div>
+            <div class="arch-arrow"></div>
+            <div class="arch-fusion">Weighted Fusion + Cost-Asymmetric Decision Layer</div>
+            <div class="arch-arrow"></div>
+            <div class="arch-tiers">
+              <div class="arch-tier t-approve">Auto-approve<div class="tier-sub">Low risk</div></div>
+              <div class="arch-tier t-friction">Soft Friction<div class="tier-sub">Extra verification</div></div>
+              <div class="arch-tier t-deny">Hold / Deny<div class="tier-sub">High risk</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Results -->
+    <div class="docs-section animate-in animate-in-delay-4" id="docs-results">
+      <div class="docs-section-header">
+        <div class="docs-section-icon results">✦</div>
+        <h2>Key Results</h2>
+      </div>
+      <div class="docs-content">
+        <p>Performance summary across all three modules on held-out test sets:</p>
+        <div class="results-grid">
+          <div class="result-card rc-behavioral">
+            <div class="rc-title">Behavioral (LSTM)</div>
+            <div class="rc-metric">
+              <span class="rc-label">FPR @ 90% recall</span>
+              <span class="rc-val better">1.1%</span>
+            </div>
+            <div class="rc-metric">
+              <span class="rc-label">Baseline LSTM</span>
+              <span class="rc-val">1.6%</span>
+            </div>
+            <div class="rc-metric">
+              <span class="rc-label">RF baseline (prior work)</span>
+              <span class="rc-val baseline">25.0%</span>
+            </div>
+            <div class="rc-improvement">
+              Hybrid UCI data: Both LSTMs beat RF (<b>FPR 5.9% vs 1.7–2.1%</b>); cost-aware edge smaller on real data — noted honestly.
+            </div>
+          </div>
+          <div class="result-card rc-image">
+            <div class="rc-title">Image Forensics</div>
+            <div class="rc-metric">
+              <span class="rc-label">ELA-CNN AUC</span>
+              <span class="rc-val better">0.987</span>
+            </div>
+            <div class="rc-metric">
+              <span class="rc-label">Precision</span>
+              <span class="rc-val">0.93</span>
+            </div>
+            <div class="rc-metric">
+              <span class="rc-label">Recall</span>
+              <span class="rc-val better">1.00</span>
+            </div>
+            <div class="rc-improvement">
+              Perceptual hashing catches <b>100%</b> of reused/stock images — a case ELA can't catch since no pixels are altered.
+            </div>
+          </div>
+          <div class="result-card rc-network">
+            <div class="rc-title">Network / Ring (GNN)</div>
+            <div class="rc-metric">
+              <span class="rc-label">GraphSAGE AUC</span>
+              <span class="rc-val better">0.993</span>
+            </div>
+            <div class="rc-metric">
+              <span class="rc-label">Recall</span>
+              <span class="rc-val better">0.96</span>
+            </div>
+            <div class="rc-metric">
+              <span class="rc-label">RF (features only) AUC</span>
+              <span class="rc-val baseline">0.828</span>
+            </div>
+            <div class="rc-improvement">
+              Reduces false alarms on innocent shared-address customers by <b>83% (71→12)</b> vs naive "flag any sharing" heuristic.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Methodology -->
+    <div class="docs-section animate-in animate-in-delay-5" id="docs-method">
+      <div class="docs-section-header">
+        <div class="docs-section-icon method">⚗</div>
+        <h2>Methodology Note</h2>
+      </div>
+      <div class="docs-content">
+        <p>No public dataset contains verified return-fraud ground truth labels — this is a documented limitation in the literature (data scarcity is repeatedly cited in systematic reviews of e-commerce fraud detection).</p>
+        <div class="method-note">
+          <p>This project addresses that constraint with a <strong>hybrid real + synthetic</strong> approach: genuine customer behavior is grounded in real transactional data (<span class="method-stat">UCI Online Retail dataset, 541,909 real transactions</span>) wherever possible, while fraud patterns are synthetically injected following literature-derived behavioral archetypes (wardrobing, INR abuse, damage-claim fraud, serial rings).</p>
+          <p style="margin-top:10px;">This is <strong>standard practice</strong> in fraud-detection research given the acknowledged absence of labeled fraud datasets, and is documented openly rather than presented as real fraud-labeled data.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Folder Guide & Running -->
+    <div class="docs-section" id="docs-folders">
+      <div class="docs-section-header">
+        <div class="docs-section-icon run">▸</div>
+        <h2>Folder Guide & Running</h2>
+      </div>
+      <div class="docs-content">
+        <table class="folder-table">
+          <thead>
+            <tr><th>Folder</th><th>Contents</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>module1_behavioral_lstm/</td>
+              <td>Synthetic + hybrid (real UCI Online Retail data) behavioral sequence model. LSTM with cost-asymmetric loss vs. standard baseline vs. tabular Random Forest (prior-work style).</td>
+            </tr>
+            <tr>
+              <td>module2_image_forensics/</td>
+              <td>Synthetic damage-claim image dataset, Error Level Analysis (ELA) + CNN for splice detection, perceptual hashing for reused/stock image detection.</td>
+            </tr>
+            <tr>
+              <td>module3_graph_fraud_rings/</td>
+              <td>Synthetic customer graph (shared device/address), GraphSAGE model vs. degree-heuristic and feature-only baselines for fraud ring detection.</td>
+            </tr>
+            <tr>
+              <td>frontend_dashboard/</td>
+              <td>Analyst review console — open directly in a browser. Visualizes the fused risk score, all three signal breakdowns, and the tiered decision for sample claims.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="docs-code">
+          <span class="comment"># Install dependencies</span><br>
+          <span class="cmd">pip install</span> torch torch_geometric imagehash pandas numpy scikit-learn matplotlib<br><br>
+          <span class="comment"># Module 1 — Behavioral LSTM</span><br>
+          <span class="dir">cd module1_behavioral_lstm/src</span><br>
+          <span class="cmd">python3</span> generate_data.py &nbsp;&nbsp;<span class="comment"># synthetic data</span><br>
+          <span class="cmd">python3</span> features.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># build sequences</span><br>
+          <span class="cmd">python3</span> train.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># train + evaluate</span><br><br>
+          <span class="comment"># Module 2 — Image Forensics</span><br>
+          <span class="dir">cd ../../module2_image_forensics/src</span><br>
+          <span class="cmd">python3</span> generate_images.py<br>
+          <span class="cmd">python3</span> train_image.py<br><br>
+          <span class="comment"># Module 3 — Graph Fraud Rings</span><br>
+          <span class="dir">cd ../../module3_graph_fraud_rings/src</span><br>
+          <span class="cmd">python3</span> generate_graph.py<br>
+          <span class="cmd">python3</span> train_graph.py
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     SCRIPT
+     ============================================================ -->
+<script>
+/* ---------- NAV TABS ---------- */
+const navTabs = document.querySelectorAll('.nav-tab');
+const views = document.querySelectorAll('.view');
+const topbarStats = document.getElementById('topbar-stats');
+
+navTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const target = tab.dataset.view;
+
+    // update tabs
+    navTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    // update views
+    views.forEach(v => v.classList.remove('active'));
+    document.getElementById(`view-${target}`).classList.add('active');
+
+    // show/hide stats based on view
+    topbarStats.style.display = target === 'console' ? 'flex' : 'none';
+
+    // re-trigger documentation animations when switching to docs
+    if (target === 'docs') {
+      triggerDocsAnimations();
+    }
+  });
+});
+
+function triggerDocsAnimations() {
+  const sections = document.querySelectorAll('#view-docs .docs-section, #view-docs .docs-hero');
+  sections.forEach(s => {
+    s.style.animation = 'none';
+    s.offsetHeight; // force reflow
+    s.style.animation = '';
+  });
+}
+
+/* ---------- CLAIMS DATA ---------- */
+const CLAIMS = [
+  {
+    id: "CLM-88213", customer: "cust_5380 · 3-year account", category: "apparel_casual",
+    value: 101.09, reason: "wrong_item", trueType: "genuine",
+    behavioral: 0.06, image: null, network: null,
+    orderHistory: [0,0,0,1,0,0,1,0],
+    explanation: [
+      "8-order history, consistent low return frequency (12%)",
+      "No shared device/address with any flagged account",
+      "No image evidence submitted — reason is item mismatch, not damage"
+    ]
+  },
+  {
+    id: "CLM-88214", customer: "cust_3805 · 11-month account", category: "electronics",
+    value: 103.59, reason: "changed_mind", trueType: "wardrobing",
+    behavioral: 0.81, image: null, network: 0.22,
+    orderHistory: [0,1,0,1,1,0,1,1],
+    explanation: [
+      "Return filed 3 days after delivery — high-value electronics category",
+      "4 of last 8 orders returned, concentrated in event/electronics categories",
+      "Pattern matches 'wardrobing' signature: buy → use briefly → return"
+    ]
+  },
+  {
+    id: "CLM-88215", customer: "cust_4395 · 7-month account", category: "electronics",
+    value: 83.03, reason: "damaged", trueType: "damage_fraud",
+    behavioral: 0.74, image: 0.93, network: 0.18,
+    orderHistory: [0,1,0,0,1,1,0,1],
+    imageSrc: "assets/sample_spliced.jpg",
+    explanation: [
+      "Damage photo shows ELA compression discontinuity around damage region (hotspot score 0.93)",
+      "3rd damage claim from this account in 7 months",
+      "Image forensics module flags likely photo splicing / editing"
+    ]
+  },
+  {
+    id: "CLM-88216", customer: "cust_1499 · 2-year account", category: "home",
+    value: 173.26, reason: "wrong_item", trueType: "genuine",
+    behavioral: 0.09, image: null, network: null,
+    orderHistory: [0,0,1,0,0,0,0,1],
+    explanation: [
+      "Low overall return rate (14%), long account history",
+      "No connection to any known device/address cluster",
+      "Reason code consistent with warehouse pick error, not evidence-based fraud"
+    ]
+  },
+  {
+    id: "CLM-88217", customer: "cust_7742 · 2-month account", category: "apparel_event",
+    value: 214.40, reason: "damaged", trueType: "serial_fraud",
+    behavioral: 0.88, image: 0.41, network: 0.95,
+    orderHistory: [1,1,0,1,1,0,1,1],
+    imageSrc: "assets/sample_genuine2.jpg",
+    explanation: [
+      "Device ID shared with 6 other accounts flagged in the last 30 days",
+      "Address matches a cluster of 4 accounts rotating through the same 2 delivery addresses",
+      "Return rate 65% across a 2-month-old account — inconsistent with organic behavior",
+      "Image forensics found no tampering — flagged almost entirely by network signal"
+    ]
+  },
+  {
+    id: "CLM-88218", customer: "cust_2210 · 5-month account", category: "apparel_event",
+    value: 96.20, reason: "item_not_received", trueType: "inr_abuser",
+    behavioral: 0.69, image: null, network: 0.08,
+    orderHistory: [0,1,0,1,0,1,0,1],
+    explanation: [
+      "Carrier scan confirms delivery; customer disputes receipt",
+      "2nd 'item not received' claim in 5 months, both high-value categories",
+      "No network ring signal — isolated account-level pattern"
+    ]
+  }
+];
+
+function composite(c){
+  const weights = {behavioral: 0.5, image: 0.25, network: 0.25};
+  let usedWeight = weights.behavioral;
+  let score = c.behavioral * weights.behavioral;
+  if(c.image !== null){ score += c.image * weights.image; usedWeight += weights.image; }
+  if(c.network !== null){ score += c.network * weights.network; usedWeight += weights.network; }
+  return score / usedWeight;
+}
+function tier(score){
+  if(score < 0.30) return {key:'approve', label:'Auto-approve'};
+  if(score < 0.70) return {key:'friction', label:'Soft friction'};
+  return {key:'deny', label:'Hold / deny'};
+}
+
+let activeId = CLAIMS[0].id;
+
+function renderQueue(){
+  const q = document.getElementById('queue');
+  q.querySelectorAll('.queue-item').forEach(e=>e.remove());
+  CLAIMS.forEach(c=>{
+    const score = composite(c);
+    const t = tier(score);
+    const div = document.createElement('div');
+    div.className = 'queue-item' + (c.id===activeId ? ' active':'');
+    div.onclick = ()=>{ activeId = c.id; renderQueue(); renderMain(); };
+    div.innerHTML = `
+      <div class="qi-top">
+        <span class="qi-id">${c.id}</span>
+        <span class="qi-tier ${t.key}">${t.label}</span>
+      </div>
+      <div class="qi-desc">${c.category.replace('_',' ')} return · ${c.reason.replace(/_/g,' ')}</div>
+      <div class="qi-value">$${c.value.toFixed(2)} · risk ${(score*100).toFixed(0)}</div>
+    `;
+    q.appendChild(div);
+  });
+}
+
+function seqViz(history){
+  return `<div class="seq-viz">` + history.map(h=>{
+    const height = h ? (40 + Math.random()*40) : (15 + Math.random()*25);
+    return `<div class="seq-bar ${h?'ret':''}" style="height:${height}%"></div>`;
+  }).join('') + `</div>`;
+}
+
+function miniGraph(hasNetwork, score){
+  const w=200,h=120;
+  if(!hasNetwork){
+    return `<svg class="mini-graph" viewBox="0 0 ${w} ${h}">
+      <circle cx="${w/2}" cy="${h/2}" r="7" fill="#3B4A80"/>
+      <text x="${w/2}" y="${h/2+28}" text-anchor="middle" fill="#5B6474" font-size="10" font-family="JetBrains Mono">no shared identifiers</text>
+    </svg>`;
+  }
+  const nodes = [[100,60],[55,30],[145,30],[40,90],[160,90],[100,20]];
+  const edges = [[0,1],[0,2],[0,3],[0,4],[1,3],[2,4],[0,5]];
+  const color = score>0.6 ? '#D46A5F' : '#D6A24A';
+  let edgeSvg = edges.map(([a,b])=>`<line x1="${nodes[a][0]}" y1="${nodes[a][1]}" x2="${nodes[b][0]}" y2="${nodes[b][1]}" stroke="${color}" stroke-opacity="0.4" stroke-width="1.5"/>`).join('');
+  let nodeSvg = nodes.map((n,i)=>`<circle cx="${n[0]}" cy="${n[1]}" r="${i===0?9:6}" fill="${i===0?color:'#2B3441'}" stroke="${color}" stroke-width="${i===0?0:1.5}"/>`).join('');
+  return `<svg class="mini-graph" viewBox="0 0 ${w} ${h}">${edgeSvg}${nodeSvg}</svg>`;
+}
+
+function renderMain(){
+  const c = CLAIMS.find(x=>x.id===activeId);
+  const score = composite(c);
+  const t = tier(score);
+  const weights = {behavioral: 0.5, image: 0.25, network: 0.25};
+  let usedWeight = weights.behavioral;
+  let bSeg = c.behavioral * weights.behavioral;
+  let iSeg = 0, nSeg = 0;
+  if(c.image !== null){ iSeg = c.image * weights.image; usedWeight += weights.image; }
+  if(c.network !== null){ nSeg = c.network * weights.network; usedWeight += weights.network; }
+  const total = bSeg+iSeg+nSeg;
+  const bPct = (bSeg/total*100).toFixed(1), iPct=(iSeg/total*100).toFixed(1), nPct=(nSeg/total*100).toFixed(1);
+
+  const main = document.getElementById('main');
+  main.innerHTML = `
+    <div class="claim-head animate-in">
+      <div>
+        <h1>${c.id}</h1>
+        <div class="meta">${c.customer} &nbsp;·&nbsp; <span>${c.category.replace('_',' ')}</span> &nbsp;·&nbsp; <span>$${c.value.toFixed(2)}</span> &nbsp;·&nbsp; reason: <span>${c.reason.replace(/_/g,' ')}</span></div>
+      </div>
+      <div class="decision-pill ${t.key}">${t.label}<div class="sub">composite risk ${(score*100).toFixed(0)}/100</div></div>
+    </div>
+
+    <div class="composite animate-in animate-in-delay-1">
+      <div class="composite-label">
+        <h3>Composite Risk Signal</h3>
+        <div class="composite-score">${(score*100).toFixed(0)}<span style="font-size:14px;color:var(--text-faint)">/100</span></div>
+      </div>
+      <div class="meter-track">
+        <div class="meter-seg behavioral" style="width:${bPct}%"></div>
+        <div class="meter-seg image" style="width:${iPct}%"></div>
+        <div class="meter-seg network" style="width:${nPct}%"></div>
+      </div>
+      <div class="meter-legend">
+        <div class="legend-item"><span class="legend-dot behavioral"></span>Behavioral <b>${c.behavioral.toFixed(2)}</b></div>
+        <div class="legend-item"><span class="legend-dot image"></span>Image forensics <b>${c.image===null?'—':c.image.toFixed(2)}</b></div>
+        <div class="legend-item"><span class="legend-dot network"></span>Network / ring <b>${c.network===null?'—':c.network.toFixed(2)}</b></div>
+      </div>
+    </div>
+
+    <div class="signals animate-in animate-in-delay-2">
+      <div class="signal-card">
+        <div class="signal-top"><span class="signal-name">Behavioral (LSTM)</span><span class="signal-score" style="color:${c.behavioral>0.6?'var(--deny)':c.behavioral>0.3?'var(--watch)':'var(--safe)'}">${c.behavioral.toFixed(2)}</span></div>
+        <div class="signal-visual">${seqViz(c.orderHistory)}</div>
+        <div class="signal-body">Last 8 orders — <b>marked dots = returned</b>. Sequence encodes recency, value, and return-timing pattern.</div>
+      </div>
+      <div class="signal-card">
+        <div class="signal-top"><span class="signal-name">Image Forensics</span><span class="signal-score" style="color:${c.image===null?'var(--text-faint)':c.image>0.6?'var(--deny)':c.image>0.3?'var(--watch)':'var(--safe)'}">${c.image===null?'—':c.image.toFixed(2)}</span></div>
+        <div class="signal-visual">${c.imageSrc ? `<img src="${c.imageSrc}"/>` : `<div style="color:var(--text-faint); font-size:11px; font-family:var(--mono);">no image submitted</div>`}</div>
+        <div class="signal-body">${c.image===null ? 'Not applicable — claim reason has no photo evidence requirement.' : 'ELA-CNN score: probability the submitted photo shows local compression/splicing artifacts.'}</div>
+      </div>
+      <div class="signal-card">
+        <div class="signal-top"><span class="signal-name">Network / Ring (GNN)</span><span class="signal-score" style="color:${c.network===null?'var(--text-faint)':c.network>0.6?'var(--deny)':c.network>0.3?'var(--watch)':'var(--safe)'}">${c.network===null?'—':c.network.toFixed(2)}</span></div>
+        <div class="signal-visual">${miniGraph(c.network!==null, c.network||0)}</div>
+        <div class="signal-body">${c.network===null ? 'No shared device or address with other accounts.' : 'GraphSAGE risk score from device/address adjacency and neighborhood return behavior.'}</div>
+      </div>
+    </div>
+
+    <div class="explain animate-in animate-in-delay-3">
+      <h3>Why this score</h3>
+      <ul>${c.explanation.map(e=>`<li><span class="bullet">→</span>${e}</li>`).join('')}</ul>
+    </div>
+
+    <div class="perf animate-in animate-in-delay-4">
+      <h3>Module Validation (held-out test sets)</h3>
+      <div class="perf-grid">
+        <div class="perf-chart-wrap"><canvas id="perfChart"></canvas></div>
+        <div class="perf-notes">
+          <div class="perf-note">Behavioral LSTM reduces false-positive rate to <b>1.1%</b> at 90% fraud recall, vs <b>25.0%</b> for a tabular Random Forest baseline mirroring prior published work.</div>
+          <div class="perf-note">Image forensics module reaches <b>AUC 0.987</b> distinguishing spliced from genuine damage photos; perceptual hashing catches <b>100%</b> of reused/stock images in testing.</div>
+          <div class="perf-note">GraphSAGE cuts false alarms on innocent shared-address customers by <b>83%</b> (71→12) versus a naive "flag any sharing" heuristic, while nearly doubling ring-detection recall.</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  renderPerfChart();
+}
+
+let perfChartInstance = null;
+function renderPerfChart(){
+  const ctx = document.getElementById('perfChart');
+  if(!ctx) return;
+  if(perfChartInstance) perfChartInstance.destroy();
+  perfChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Behavioral\n(LSTM)', 'Image\nForensics', 'Network\n(GraphSAGE)', 'Prior-work\nbaseline'],
+      datasets: [{
+        label: 'AUC',
+        data: [0.992, 0.987, 0.993, 0.906],
+        backgroundColor: ['#6C8CFF','#B47EE5','#5FC2C9','#8B94A6'],
+        borderRadius: 6,
+        barThickness: 40,
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{
+        y:{ min:0.8, max:1.0, grid:{color:'#2B3441'}, ticks:{color:'#8B94A6', font:{family:'JetBrains Mono', size:10}} },
+        x:{ grid:{display:false}, ticks:{color:'#8B94A6', font:{family:'JetBrains Mono', size:10}} }
+      }
+    }
+  });
+}
+
+renderQueue();
+renderMain();
+</script>
+</body>
+</html>

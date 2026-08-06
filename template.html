@@ -1,0 +1,333 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Return Intelligence | Enterprise Analyst v2.4</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #0D1117;
+            color: #dfe2eb;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: #1C2330;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        .glass-card:hover {
+            background: #222B38;
+            transform: scale(1.005);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .risk-gauge {
+            stroke-dasharray: 440;
+            stroke-dashoffset: 440;
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .fusion-bar-fill {
+            width: 0%;
+            transition: width 1.2s ease-out;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary": "#003731",
+                        "secondary-container": "#5e1ab1",
+                        "inverse-on-surface": "#2d3137",
+                        "on-tertiary-fixed-variant": "#005048",
+                        "tertiary-container": "#00a393",
+                        "secondary": "#d6baff",
+                        "on-primary-fixed": "#001847",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "surface": "#10141a",
+                        "on-primary": "#002c72",
+                        "secondary-fixed-dim": "#d6baff",
+                        "tertiary-fixed": "#63f9e4",
+                        "outline-variant": "#434653",
+                        "on-primary-container": "#002665",
+                        "on-background": "#dfe2eb",
+                        "on-secondary": "#430089",
+                        "inverse-primary": "#1857c8",
+                        "on-secondary-container": "#c8a4ff",
+                        "tertiary": "#3eddc8",
+                        "surface-variant": "#31353c",
+                        "on-surface": "#dfe2eb",
+                        "on-surface-variant": "#c3c6d6",
+                        "surface-container-lowest": "#0a0e14",
+                        "surface-container-low": "#181c22",
+                        "secondary-fixed": "#ecdcff",
+                        "outline": "#8d909f",
+                        "surface-bright": "#353940",
+                        "on-tertiary-container": "#00302b",
+                        "on-tertiary-fixed": "#00201c",
+                        "on-secondary-fixed": "#280056",
+                        "surface-container-high": "#262a31",
+                        "tertiary-fixed-dim": "#3eddc8",
+                        "error": "#ffb4ab",
+                        "background": "#10141a",
+                        "surface-tint": "#b2c5ff",
+                        "surface-dim": "#10141a",
+                        "on-error-container": "#ffdad6",
+                        "on-error": "#690005",
+                        "primary-container": "#5b8cff",
+                        "primary": "#b2c5ff",
+                        "on-primary-fixed-variant": "#0040a0",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#5e1ab1",
+                        "surface-container-highest": "#31353c",
+                        "surface-container": "#1c2026",
+                        "primary-fixed": "#dae2ff",
+                        "inverse-surface": "#dfe2eb"
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                    spacing: { "sm": "8px", "lg": "24px", "unit": "8px", "xs": "4px", "container-margin": "32px", "xl": "32px", "xxl": "48px", "gutter": "24px", "md": "16px" },
+                    fontFamily: {
+                        "headline-sm": ["Space Grotesk"],
+                        "body-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label": ["Inter"],
+                        "body-md": ["Inter"],
+                        "metric-lg": ["JetBrains Mono"],
+                        "headline-lg": ["Space Grotesk"],
+                        "metric-sm": ["JetBrains Mono"],
+                        "display": ["Space Grotesk"],
+                        "headline-md": ["Space Grotesk"]
+                    },
+                    fontSize: {
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "metric-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "metric-sm": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="flex min-h-screen">
+<!-- SIDE NAV BAR (Authority: JSON & Context) -->
+<aside class="h-screen w-[320px] sticky left-0 top-0 bg-surface-container dark:bg-surface-container flex flex-col border-r border-outline-variant shadow-xl z-50">
+<div class="p-lg flex items-center gap-md">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Return Intelligence</h1>
+<p class="text-on-surface-variant text-[10px] uppercase tracking-widest font-bold">Enterprise Analyst v2.4</p>
+</div>
+</div>
+<div class="px-md py-sm">
+<button class="w-full bg-primary-container text-on-primary-container py-md rounded-xl font-headline-sm text-headline-sm flex items-center justify-center gap-sm hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined">add_circle</span>
+                New Investigation
+            </button>
+</div>
+<nav class="flex-1 px-md py-lg space-y-xs overflow-y-auto no-scrollbar">
+<a class="flex items-center gap-md px-md py-md rounded-lg transition-colors hover:bg-surface-variant text-on-surface-variant font-medium tab-link" href="#" data-tab="tab-dashboard">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-md py-md rounded-lg text-primary font-bold border-r-2 border-primary bg-surface-variant/50 tab-link active" href="#" data-tab="tab-queue">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">work</span>
+<span class="font-body-md text-body-md">Case Queue</span>
+</a>
+<a class="flex items-center gap-md px-md py-md rounded-lg transition-colors hover:bg-surface-variant text-on-surface-variant font-medium tab-link" href="#" data-tab="tab-behavior">
+<span class="material-symbols-outlined">search_insights</span>
+<span class="font-body-md text-body-md">Behavior Intel</span>
+</a>
+<a class="flex items-center gap-md px-md py-md rounded-lg transition-colors hover:bg-surface-variant text-on-surface-variant font-medium tab-link" href="#" data-tab="tab-graph">
+<span class="material-symbols-outlined">hub</span>
+<span class="font-body-md text-body-md">Fraud Network</span>
+</a>
+<a class="flex items-center gap-md px-md py-md rounded-lg transition-colors hover:bg-surface-variant text-on-surface-variant font-medium tab-link" href="#" data-tab="tab-image">
+<span class="material-symbols-outlined">image_search</span>
+<span class="font-body-md text-body-md">Image Forensics</span>
+</a>
+<a class="flex items-center gap-md px-md py-md rounded-lg transition-colors hover:bg-surface-variant text-on-surface-variant font-medium tab-link" href="#" data-tab="tab-fusion">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md text-body-md">Risk Fusion</span>
+</a>
+<div class="pt-lg pb-sm px-md">
+<span class="text-label font-label text-outline uppercase">Active Cases</span>
+</div>
+<div class="space-y-sm">
+<div class="p-md glass-card rounded-xl border-l-4 border-error">
+<p class="text-body-sm font-headline-sm text-error mb-1">CLAIM-88219</p>
+<p class="text-[11px] text-on-surface-variant">Marcus Thorne • $1,240.00</p>
+</div>
+<div class="p-md glass-card rounded-xl border-l-4 border-primary opacity-60">
+<p class="text-body-sm font-headline-sm text-primary mb-1">CLAIM-77204</p>
+<p class="text-[11px] text-on-surface-variant">Elena Vance • $420.00</p>
+</div>
+</div>
+</nav>
+<footer class="p-lg border-t border-outline-variant space-y-md">
+<a class="flex items-center gap-md text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-md">Support</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+</footer>
+</aside>
+<!-- MAIN CONTENT AREA -->
+<main class="flex-1 flex flex-col overflow-hidden relative">
+<!-- TOP NAV BAR -->
+<header class="h-16 sticky top-0 bg-surface dark:bg-surface flex justify-between items-center px-lg z-50 shadow-sm">
+<div class="flex items-center gap-xl">
+<div class="flex items-center gap-sm bg-surface-container px-md py-xs rounded-full border border-outline-variant w-96">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm w-full" placeholder="Search claims, IDs, or entities..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-md border-r border-outline-variant pr-lg">
+<div class="text-right">
+<p class="text-[10px] text-outline uppercase font-bold leading-none">Claims Today</p>
+<p class="font-metric-sm text-metric-sm text-on-surface">1,248</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-outline uppercase font-bold leading-none">Auto Approved</p>
+<p class="font-metric-sm text-metric-sm text-tertiary">92.4%</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-outline uppercase font-bold leading-none">Cost Saved</p>
+<p class="font-metric-sm text-metric-sm text-primary">$42.8k</p>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">notifications</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a senior fraud investigator in a dark room with subtle blue ambient light, high-tech interface reflections on their glasses, enterprise quality, 8k resolution, cinematic lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVatj3xaLcHg0ZvsfLpgqDFVHMZTQt_lRY5xb_d-EqEgV-xXRSFjukSwiqtd32vdlTrk1OvC-aTtYIHWp_ovfhxZWTVdBo0n-rDhKVo9n9kHNJ0-8x-oJ2SoQy691thq1dq-e9cOiBtLj9YyyczALFahD6I_yDxWOw567Zwh_hjLAdFeEpcSN1anXPCIBZQvs4AmB3dWqy6VCmKUncw0XjxSrG9f6DKXQ3u4UMp065a4TqH29V5MdDKwuzbhl2TZ0zKoJwFDD9qls">
+</div>
+</div>
+</div>
+</header>
+<!-- DASHBOARD SCROLL CONTENT -->
+<div class="flex-1 overflow-y-auto p-xl space-y-lg no-scrollbar">
+
+<div id="tab-queue" class="tab-content block space-y-lg">
+<!-- INSERT_QUEUE_HERE -->
+</div>
+
+<div id="tab-dashboard" class="tab-content hidden space-y-lg">
+<!-- INSERT_DASHBOARD_HERE -->
+</div>
+
+<div id="tab-behavior" class="tab-content hidden space-y-lg">
+<!-- INSERT_BEHAVIOR_HERE -->
+</div>
+
+<div id="tab-graph" class="tab-content hidden space-y-lg">
+<!-- INSERT_GRAPH_HERE -->
+</div>
+
+<div id="tab-image" class="tab-content hidden space-y-lg">
+<!-- INSERT_IMAGE_HERE -->
+</div>
+
+<div id="tab-fusion" class="tab-content hidden space-y-lg">
+<!-- INSERT_FUSION_HERE -->
+</div>
+
+</div>
+<!-- FLOATING STATUS INDICATOR -->
+<div class="fixed bottom-lg right-lg z-50">
+<div class="bg-surface-container-highest px-lg py-md rounded-full shadow-2xl border border-primary/20 flex items-center gap-lg animate-pulse">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="text-label font-bold text-on-surface tracking-widest uppercase">Live Stream Connected</span>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interactions and simple visual updates
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animate risk gauge on load
+            const riskCircle = document.getElementById('riskCircle');
+            if (riskCircle) {
+                setTimeout(() => {
+                    riskCircle.style.strokeDashoffset = '66'; // Corresponds to 85% of 440
+                }, 300);
+            }
+
+            // Animate fusion bars
+            const bars = document.querySelectorAll('.fusion-bar-fill');
+            bars.forEach((bar, index) => {
+                setTimeout(() => {
+                    const finalWidth = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.width = finalWidth;
+                    }, 50);
+                }, index * 150 + 500);
+            });
+
+            // Handle the ROC path scaling for different containers
+            const rocPath = document.getElementById('rocPath');
+            if(rocPath) {
+                const container = rocPath.parentElement;
+                const updatePath = () => {
+                    const w = container.clientWidth;
+                    const h = container.clientHeight;
+                    rocPath.setAttribute('d', `M 0 ${h} Q 0 0 ${w} 0`);
+                };
+                window.addEventListener('resize', updatePath);
+                updatePath();
+            }
+
+            // Tab navigation
+            const tabLinks = document.querySelectorAll('.tab-link');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Remove active from all links
+                    tabLinks.forEach(l => {
+                        l.classList.remove('text-primary', 'font-bold', 'border-r-2', 'border-primary', 'bg-surface-variant/50');
+                        l.classList.add('transition-colors', 'hover:bg-surface-variant', 'text-on-surface-variant', 'font-medium');
+                    });
+                    // Add active to clicked link
+                    link.classList.remove('transition-colors', 'hover:bg-surface-variant', 'text-on-surface-variant', 'font-medium');
+                    link.classList.add('text-primary', 'font-bold', 'border-r-2', 'border-primary', 'bg-surface-variant/50');
+
+                    // Hide all contents
+                    tabContents.forEach(content => {
+                        content.classList.remove('block');
+                        content.classList.add('hidden');
+                    });
+                    // Show target content
+                    const targetId = link.getAttribute('data-tab');
+                    const targetContent = document.getElementById(targetId);
+                    if (targetContent) {
+                        targetContent.classList.remove('hidden');
+                        targetContent.classList.add('block');
+                    }
+                });
+            });
+        });
+    </script>
+<link rel="stylesheet" href="style.css">
+<script src="app.js"></script>
+</body></html>

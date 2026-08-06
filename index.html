@@ -1,0 +1,786 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Return Intelligence | Enterprise Analyst v2.4</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<style>
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; vertical-align:middle; }
+  body { background-color:#0D1117; color:#dfe2eb; overflow-x:hidden; }
+  .glass-card { background:#1C2330; border:1px solid rgba(255,255,255,0.07); box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); transition:transform 0.2s ease,background-color 0.2s ease; }
+  .glass-card:hover { background:#222B38; }
+  .no-scrollbar::-webkit-scrollbar { display:none; }
+  .risk-gauge-circle { stroke-dasharray:440; transition:stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1); }
+  .fusion-bar-fill { transition:width 1.2s ease-out; }
+  .queue-item { cursor:pointer; transition:all 0.2s ease; }
+  .queue-item:hover { background:#262a31 !important; }
+  .queue-item.active { background:rgba(91,140,255,0.08) !important; border-left:3px solid #5b8cff; }
+  .graph-node { transition:all 0.3s ease; }
+  @keyframes fadeSlideIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  .animate-in { animation: fadeSlideIn 0.4s ease forwards; }
+  .animate-in-d1 { animation-delay:0.1s; opacity:0; }
+  .animate-in-d2 { animation-delay:0.2s; opacity:0; }
+  .animate-in-d3 { animation-delay:0.3s; opacity:0; }
+</style>
+<script id="tailwind-config">
+  tailwind.config = { darkMode:"class", theme:{ extend:{
+    colors:{
+      "on-tertiary":"#003731","secondary-container":"#5e1ab1","inverse-on-surface":"#2d3137",
+      "on-tertiary-fixed-variant":"#005048","tertiary-container":"#00a393","secondary":"#d6baff",
+      "on-primary-fixed":"#001847","primary-fixed-dim":"#b2c5ff","surface":"#10141a",
+      "on-primary":"#002c72","secondary-fixed-dim":"#d6baff","tertiary-fixed":"#63f9e4",
+      "outline-variant":"#434653","on-primary-container":"#002665","on-background":"#dfe2eb",
+      "on-secondary":"#430089","inverse-primary":"#1857c8","on-secondary-container":"#c8a4ff",
+      "tertiary":"#3eddc8","surface-variant":"#31353c","on-surface":"#dfe2eb",
+      "on-surface-variant":"#c3c6d6","surface-container-lowest":"#0a0e14",
+      "surface-container-low":"#181c22","secondary-fixed":"#ecdcff","outline":"#8d909f",
+      "surface-bright":"#353940","on-tertiary-container":"#00302b","on-tertiary-fixed":"#00201c",
+      "on-secondary-fixed":"#280056","surface-container-high":"#262a31",
+      "tertiary-fixed-dim":"#3eddc8","error":"#ffb4ab","background":"#10141a",
+      "surface-tint":"#b2c5ff","surface-dim":"#10141a","on-error-container":"#ffdad6",
+      "on-error":"#690005","primary-container":"#5b8cff","primary":"#b2c5ff",
+      "on-primary-fixed-variant":"#0040a0","error-container":"#93000a",
+      "on-secondary-fixed-variant":"#5e1ab1","surface-container-highest":"#31353c",
+      "surface-container":"#1c2026","primary-fixed":"#dae2ff","inverse-surface":"#dfe2eb"
+    },
+    borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+    spacing:{"sm":"8px","lg":"24px","unit":"8px","xs":"4px","container-margin":"32px","xl":"32px","xxl":"48px","gutter":"24px","md":"16px"},
+    fontFamily:{"headline-sm":["Space Grotesk"],"body-sm":["Inter"],"body-lg":["Inter"],"label":["Inter"],"body-md":["Inter"],"metric-lg":["JetBrains Mono"],"headline-lg":["Space Grotesk"],"metric-sm":["JetBrains Mono"],"display":["Space Grotesk"],"headline-md":["Space Grotesk"]},
+    fontSize:{
+      "headline-sm":["20px",{"lineHeight":"28px","fontWeight":"600"}],
+      "body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],
+      "body-lg":["18px",{"lineHeight":"28px","fontWeight":"400"}],
+      "label":["12px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"600"}],
+      "body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],
+      "metric-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"500"}],
+      "headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"700"}],
+      "metric-sm":["14px",{"lineHeight":"20px","fontWeight":"500"}],
+      "display":["48px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"700"}],
+      "headline-md":["24px",{"lineHeight":"32px","fontWeight":"600"}]
+    }
+  }}};
+</script>
+</head>
+<body class="flex min-h-screen">
+
+<!-- ═══════ SIDEBAR ═══════ -->
+<aside class="h-screen w-[300px] sticky left-0 top-0 bg-surface-container flex flex-col border-r border-outline-variant shadow-xl z-50">
+  <div class="p-lg flex items-center gap-md">
+    <div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+      <span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings:'FILL' 1;">security</span>
+    </div>
+    <div>
+      <h1 class="font-headline-md text-headline-md font-bold text-primary">ReturnShield</h1>
+      <p class="text-on-surface-variant text-[10px] uppercase tracking-widest font-bold">Enterprise Analyst v2.4</p>
+    </div>
+  </div>
+
+  <nav class="flex-1 px-md py-md space-y-xs overflow-y-auto no-scrollbar">
+    <a class="flex items-center gap-md px-md py-md rounded-lg tab-link" href="#" data-tab="tab-queue">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">work</span>
+      <span class="font-body-md text-body-md">Case Queue</span>
+    </a>
+    <a class="flex items-center gap-md px-md py-md rounded-lg tab-link" href="#" data-tab="tab-behavior">
+      <span class="material-symbols-outlined">psychology</span>
+      <span class="font-body-md text-body-md">Behavior Intel</span>
+    </a>
+    <a class="flex items-center gap-md px-md py-md rounded-lg tab-link" href="#" data-tab="tab-graph">
+      <span class="material-symbols-outlined">hub</span>
+      <span class="font-body-md text-body-md">Graph Intelligence</span>
+    </a>
+    <a class="flex items-center gap-md px-md py-md rounded-lg tab-link" href="#" data-tab="tab-image">
+      <span class="material-symbols-outlined">image_search</span>
+      <span class="font-body-md text-body-md">Image Forensics</span>
+    </a>
+    <a class="flex items-center gap-md px-md py-md rounded-lg tab-link" href="#" data-tab="tab-fusion">
+      <span class="material-symbols-outlined">analytics</span>
+      <span class="font-body-md text-body-md">Risk Fusion</span>
+    </a>
+    <a class="flex items-center gap-md px-md py-md rounded-lg tab-link" href="#" data-tab="tab-dashboard">
+      <span class="material-symbols-outlined">dashboard</span>
+      <span class="font-body-md text-body-md">Dashboard</span>
+    </a>
+
+    <!-- Active Cases in Sidebar (dynamically populated) -->
+    <div class="pt-lg pb-sm px-md">
+      <span class="text-label font-label text-outline uppercase">Active Cases</span>
+    </div>
+    <div id="sidebar-cases" class="space-y-sm"></div>
+  </nav>
+
+  <footer class="p-lg border-t border-outline-variant space-y-md">
+    <a class="flex items-center gap-md text-on-surface-variant hover:text-primary transition-colors" href="#">
+      <span class="material-symbols-outlined">help</span><span class="font-body-md">Support</span>
+    </a>
+    <a class="flex items-center gap-md text-on-surface-variant hover:text-primary transition-colors" href="#">
+      <span class="material-symbols-outlined">settings</span><span class="font-body-md">Settings</span>
+    </a>
+  </footer>
+</aside>
+
+<!-- ═══════ MAIN ═══════ -->
+<main class="flex-1 flex flex-col overflow-hidden relative">
+  <!-- TOP NAV -->
+  <header class="h-16 sticky top-0 bg-surface flex justify-between items-center px-lg z-50 shadow-sm">
+    <div class="flex items-center gap-sm bg-surface-container px-md py-xs rounded-full border border-outline-variant w-80">
+      <span class="material-symbols-outlined text-outline">search</span>
+      <input class="bg-transparent border-none focus:ring-0 text-body-sm w-full" placeholder="Search claims, IDs, or entities...">
+    </div>
+    <div class="flex items-center gap-lg">
+      <div class="flex items-center gap-md border-r border-outline-variant pr-lg">
+        <div class="text-right"><p class="text-[10px] text-outline uppercase font-bold leading-none">Claims Today</p><p class="font-metric-sm text-metric-sm text-on-surface">1,248</p></div>
+        <div class="text-right"><p class="text-[10px] text-outline uppercase font-bold leading-none">Auto Approved</p><p class="font-metric-sm text-metric-sm text-tertiary">92.4%</p></div>
+        <div class="text-right"><p class="text-[10px] text-outline uppercase font-bold leading-none">Cost Saved</p><p class="font-metric-sm text-metric-sm text-primary">₹3.56L</p></div>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">notifications</span>
+    </div>
+  </header>
+
+  <!-- TAB CONTENT -->
+  <div class="flex-1 overflow-y-auto p-xl no-scrollbar">
+
+    <!-- ═══════ CASE QUEUE TAB ═══════ -->
+    <div id="tab-queue" class="tab-content block">
+      <div class="flex gap-lg h-full">
+        <!-- Left: Claim List -->
+        <div class="w-[280px] flex-shrink-0 space-y-sm" id="cq-claim-list"></div>
+        <!-- Right: Claim Detail -->
+        <div class="flex-1 space-y-lg" id="cq-detail"></div>
+      </div>
+    </div>
+
+    <!-- ═══════ BEHAVIOR TAB ═══════ -->
+    <div id="tab-behavior" class="tab-content hidden">
+      <div class="glass-card rounded-[16px] p-xl">
+        <div class="mb-lg border-b border-outline-variant pb-md">
+          <div class="text-primary text-label font-bold tracking-widest uppercase mb-sm">Module 1</div>
+          <h2 class="font-headline-lg text-headline-lg text-on-surface">Behavior Risk Scoring</h2>
+          <p class="text-body-md text-on-surface-variant mt-sm">Select a scenario or craft your own order history — watch the LSTM pipeline score it live</p>
+        </div>
+
+        <div class="feature-table-wrap">
+          <table id="feature-table">
+            <thead><tr><th>Idx</th><th>Feature</th><th>Captures</th><th>Encoding</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td><span class="feat-tag">recency</span></td><td>Time gap since previous order</td><td><code>min(days,90)/90</code></td></tr>
+              <tr><td>1</td><td><span class="feat-tag">order_value</span></td><td>Purchase size (log-scaled)</td><td><code>log1p(v)/8</code></td></tr>
+              <tr><td>2</td><td><span class="feat-tag">high_value_cat</span></td><td>Wardrobing-prone category</td><td><code>0 or 1</code></td></tr>
+              <tr><td>3</td><td><span class="feat-tag">returned</span></td><td>Was this order returned</td><td><code>0 or 1</code></td></tr>
+              <tr><td>4</td><td><span class="feat-tag">days_to_return</span></td><td>Speed of return (fast = suspicious)</td><td><code>min(d,30)/30</code></td></tr>
+              <tr><td>5</td><td><span class="feat-tag">delivery_confirmed</span></td><td>Carrier confirmed delivery</td><td><code>0 or 1</code></td></tr>
+              <tr><td>6</td><td><span class="feat-tag">return_reason</span></td><td>Stated reason for return</td><td><code>ordinal/vocab</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="demo-layout">
+          <div class="demo-input-panel">
+            <div class="panel-header">
+              <h3>Order History</h3>
+              <div class="scenario-btns">
+                <button class="scenario-btn active" data-scenario="genuine" id="btn-genuine">Genuine</button>
+                <button class="scenario-btn" data-scenario="wardrobing" id="btn-wardrobing">Wardrobing</button>
+                <button class="scenario-btn" data-scenario="inr" id="btn-inr">INR Abuser</button>
+                <button class="scenario-btn" data-scenario="serial" id="btn-serial">Serial Ring</button>
+              </div>
+            </div>
+            <div id="orders-container"></div>
+            <button id="add-order-btn" class="add-order-btn">+ Add Order</button>
+            <button id="score-btn" class="score-btn">Score This Return ⟶</button>
+          </div>
+          <div class="demo-output-panel">
+            <div id="output-placeholder" class="output-placeholder">
+              <div class="placeholder-icon">◈</div>
+              <p>Select a scenario and click <strong>"Score This Return"</strong> to see the full pipeline output</p>
+            </div>
+            <div id="output-results" class="output-results hidden">
+              <div class="output-block">
+                <h4>Sequence Matrix <span class="dim-label">(10 × 7)</span></h4>
+                <div id="sequence-heatmap" class="sequence-heatmap"></div>
+                <div class="heatmap-legend"><span>0.0</span><div class="legend-gradient"></div><span>1.0</span></div>
+              </div>
+              <div class="output-block">
+                <h4>Risk Assessment</h4>
+                <div class="risk-display">
+                  <div class="risk-gauge-container">
+                    <svg id="risk-gauge" viewBox="0 0 200 120" class="risk-gauge">
+                      <defs>
+                        <linearGradient id="gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" style="stop-color:#10b981"/><stop offset="30%" style="stop-color:#10b981"/>
+                          <stop offset="50%" style="stop-color:#f59e0b"/><stop offset="70%" style="stop-color:#f59e0b"/>
+                          <stop offset="100%" style="stop-color:#ef4444"/>
+                        </linearGradient>
+                      </defs>
+                      <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12" stroke-linecap="round"/>
+                      <path id="gauge-fill" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gauge-gradient)" stroke-width="12" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+                      <circle id="gauge-dot" cx="20" cy="100" r="6" fill="#fff"/>
+                      <text id="gauge-score" x="100" y="85" text-anchor="middle" fill="#fff" font-size="22" font-weight="700">—</text>
+                      <text id="gauge-label" x="100" y="105" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="10">calibrated risk</text>
+                    </svg>
+                  </div>
+                  <div id="tier-badge" class="tier-badge">—</div>
+                </div>
+                <div class="tier-bar">
+                  <div class="tier-zone approve"><span>Auto Approve</span><span class="thresh">&lt; 0.75</span></div>
+                  <div class="tier-zone friction"><span>Soft Friction</span><span class="thresh">0.40 – 0.65</span></div>
+                  <div class="tier-zone deny"><span>Deny</span><span class="thresh">&gt; 0.85</span></div>
+                  <div id="tier-indicator" class="tier-indicator"></div>
+                </div>
+              </div>
+              <div class="output-block">
+                <h4>Explainability — Integrated Gradients</h4>
+                <div id="explanation-content" class="explanation-content"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ GRAPH TAB ═══════ -->
+    <div id="tab-graph" class="tab-content hidden">
+      <div class="glass-card rounded-[16px] p-xl">
+        <div class="mb-lg border-b border-outline-variant pb-md">
+          <div class="text-primary text-label font-bold tracking-widest uppercase mb-sm">Module 2</div>
+          <h2 class="font-headline-lg text-headline-lg text-on-surface">Graph Intelligence</h2>
+          <p class="text-body-md text-on-surface-variant mt-sm">Community detection using shared IP addresses, devices, and payment methods to uncover organized fraud rings.</p>
+        </div>
+        <div class="dynamic-inputs" style="display:flex; justify-content:center; align-items:center; margin-bottom:20px; padding:15px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.2); border-radius:8px;">
+          <span style="font-size:0.9rem; color:var(--text-secondary); text-align:center;">
+            Graph Intelligence is dynamically connected to the active scenario in the <strong>Behavior Risk Scoring</strong> module.
+          </span>
+        </div>
+        <div class="graph-layout demo-layout">
+          <div class="graph-visual demo-input-panel">
+            <h3>Community Graph Visualization</h3>
+            <div id="graph-svg-container" style="height:300px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.2); border-radius:8px; margin-top:20px;">
+              <span style="color:#8B94A6">[ Select a scenario above to visualize graph ]</span>
+            </div>
+          </div>
+          <div class="graph-results demo-output-panel">
+            <h3>Community Analysis</h3>
+            <div class="image-result-display" style="margin-top:20px;">
+              <div class="image-score-ring">
+                <svg viewBox="0 0 120 120" class="score-ring-svg">
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
+                  <circle id="graph-score-fill" cx="60" cy="60" r="52" fill="none" stroke="#8b5cf6" stroke-width="8" stroke-dasharray="326.7" stroke-dashoffset="310.36" stroke-linecap="round" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s ease"/>
+                  <text id="graph-score-text" x="60" y="56" text-anchor="middle" fill="#fff" font-size="22" font-weight="800">0.05</text>
+                  <text x="60" y="72" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9">GRAPH RISK</text>
+                </svg>
+              </div>
+              <div class="image-flags-list" id="graph-flags-list">
+                <div class="flag-item low"><span class="flag-code">ISOLATED_NODE</span><span class="flag-msg">Customer has no suspicious shared links.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ IMAGE TAB ═══════ -->
+    <div id="tab-image" class="tab-content hidden">
+      <div class="glass-card rounded-[16px] p-xl">
+        <div class="mb-lg border-b border-outline-variant pb-md">
+          <div class="text-primary text-label font-bold tracking-widest uppercase mb-sm">Module 3</div>
+          <h2 class="font-headline-lg text-headline-lg text-on-surface">Image Intelligence</h2>
+          <p class="text-body-md text-on-surface-variant mt-sm">Duplicate detection via HSV + ORB keypoints, manipulation analysis via ELA + edge/noise heuristics</p>
+        </div>
+        <div class="dynamic-inputs" style="margin-bottom:20px; display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size:0.8rem; font-weight:600; color:#c3c6d6;">HSV Similarity</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="range" id="image-input-hsv" value="20" min="0" max="100" oninput="document.getElementById('image-input-hsv-val').innerText=this.value+'%'; calculateImageScore()" style="flex:1; accent-color:#3eddc8;">
+              <span id="image-input-hsv-val" class="weight-tag" style="width:35px; color:#3eddc8;">20%</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size:0.8rem; font-weight:600; color:#c3c6d6;">ORB Matches</label>
+            <input type="number" id="image-input-orb" value="5" min="0" onchange="calculateImageScore()" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid #434653; color:#dfe2eb; padding:6px; border-radius:4px; font-family:'JetBrains Mono';">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size:0.8rem; font-weight:600; color:#c3c6d6;">Edge Disparity</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="range" id="image-input-edge" value="5" min="0" max="100" oninput="document.getElementById('image-input-edge-val').innerText=this.value+'%'; calculateImageScore()" style="flex:1; accent-color:#3eddc8;">
+              <span id="image-input-edge-val" class="weight-tag" style="width:35px; color:#3eddc8;">5%</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size:0.8rem; font-weight:600; color:#c3c6d6;">Noise Variance</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="range" id="image-input-noise" value="2" min="0" max="100" oninput="document.getElementById('image-input-noise-val').innerText=this.value+'%'; calculateImageScore()" style="flex:1; accent-color:#3eddc8;">
+              <span id="image-input-noise-val" class="weight-tag" style="width:35px; color:#3eddc8;">2%</span>
+            </div>
+          </div>
+          <div style="grid-column:1/-1; display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" id="image-input-exact" onchange="calculateImageScore()" style="accent-color:#3eddc8; width:16px; height:16px;">
+            <label for="image-input-exact" style="margin:0; cursor:pointer; font-size:0.8rem; color:#dfe2eb;">Flag: Exact Duplicate Match Detected</label>
+          </div>
+        </div>
+        <div class="image-intel-layout">
+          <div class="image-card">
+            <h3>Scoring Architecture</h3>
+            <div class="scoring-weights-visual"><div class="weight-bar"><div class="weight-fill similarity" style="width:70%"><span>Similarity 70%</span></div><div class="weight-fill manipulation" style="width:30%"><span>Manipulation 30%</span></div></div></div>
+            <div class="scoring-thresholds">
+              <div class="threshold-item"><span class="threshold-label">Exact Duplicate Floor</span><span class="threshold-val critical">≥ 0.95</span></div>
+              <div class="threshold-item"><span class="threshold-label">Near Duplicate Floor</span><span class="threshold-val high">≥ 0.80</span></div>
+              <div class="threshold-item"><span class="threshold-label">Manipulation-Only Cap</span><span class="threshold-val medium">≤ 0.75</span></div>
+            </div>
+          </div>
+          <div class="image-card">
+            <h3>Analysis Result</h3>
+            <div class="image-result-display">
+              <div class="image-score-ring">
+                <svg viewBox="0 0 120 120" class="score-ring-svg">
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
+                  <circle id="image-score-fill" cx="60" cy="60" r="52" fill="none" stroke="url(#image-ring-grad)" stroke-width="8" stroke-dasharray="326.7" stroke-dashoffset="320.1" stroke-linecap="round" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s ease"/>
+                  <defs><linearGradient id="image-ring-grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#ef4444"/><stop offset="100%" style="stop-color:#ec4899"/></linearGradient></defs>
+                  <text id="image-score-text" x="60" y="56" text-anchor="middle" fill="#fff" font-size="22" font-weight="800">0.02</text>
+                  <text x="60" y="72" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9">IMAGE SCORE</text>
+                </svg>
+              </div>
+              <div class="image-flags-list" id="image-flags-list">
+                <div class="flag-item low"><span class="flag-code">CLEAN_IMAGE</span><span class="flag-msg">No duplicates or manipulation artifacts found.</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="image-card full-width">
+            <h3>Detection Pipeline</h3>
+            <div class="detection-pipeline">
+              <div class="detect-step"><div class="detect-icon">📸</div><h4>Preprocessing</h4><p>Resize, LAB/HSV conversion, histogram normalization</p></div>
+              <div class="detect-arrow">→</div>
+              <div class="detect-step"><div class="detect-icon">🔍</div><h4>Similarity Check</h4><p>HSV histogram correlation + ORB keypoint matching</p></div>
+              <div class="detect-arrow">→</div>
+              <div class="detect-step"><div class="detect-icon">🔬</div><h4>Manipulation Check</h4><p>Edge disparity, noise variance, ELA analysis</p></div>
+              <div class="detect-arrow">→</div>
+              <div class="detect-step"><div class="detect-icon">📊</div><h4>Score & Flags</h4><p>Weighted fusion with floors/caps → Result</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ FUSION TAB ═══════ -->
+    <div id="tab-fusion" class="tab-content hidden">
+      <div class="glass-card rounded-[16px] p-xl">
+        <div class="mb-lg border-b border-outline-variant pb-md">
+          <div class="text-primary text-label font-bold tracking-widest uppercase mb-sm">Module 4</div>
+          <h2 class="font-headline-lg text-headline-lg text-on-surface">Risk Fusion Engine</h2>
+          <p class="text-body-md text-on-surface-variant mt-sm">Weighted fusion of all intelligence signals with cost-asymmetric decision optimization</p>
+        </div>
+        <div class="fusion-layout">
+          <div class="fusion-panel">
+            <h3>Signal Weights & Scores</h3>
+            <p class="panel-desc">Adjust individual module scores to see how the fused decision changes</p>
+            <div class="fusion-sliders">
+              <div class="slider-group">
+                <label>Graph Intelligence <span class="weight-tag">w=0.35</span></label>
+                <input type="range" id="graph-score-slider" min="0" max="100" value="88" class="fusion-slider slider-graph">
+                <div class="slider-val" id="graph-score-val">0.88</div>
+              </div>
+              <div class="slider-group">
+                <label>Image Forensics <span class="weight-tag">w=0.40</span></label>
+                <input type="range" id="image-score-slider" min="0" max="100" value="95" class="fusion-slider slider-image">
+                <div class="slider-val" id="image-score-val">0.95</div>
+              </div>
+              <div class="slider-group">
+                <label>Behavior LSTM <span class="weight-tag">w=0.25</span></label>
+                <input type="range" id="behavior-score-slider" min="0" max="100" value="40" class="fusion-slider slider-behavior">
+                <div class="slider-val" id="behavior-score-val">0.40</div>
+              </div>
+            </div>
+            <div class="fusion-cost-config">
+              <h4>Business Cost Configuration (₹)</h4>
+              <div class="cost-inputs">
+                <div class="cost-input-group"><label>Cost: False Reject</label><input type="number" id="cost-false-reject" value="8000" min="1" class="cost-input"></div>
+                <div class="cost-input-group"><label>Cost: Missed Fraud</label><input type="number" id="cost-missed-fraud" value="2100" min="1" class="cost-input"></div>
+                <div class="cost-input-group"><label>Cost: Manual Review</label><input type="number" id="cost-manual-review" value="1500" min="1" class="cost-input"></div>
+              </div>
+            </div>
+            <button id="fuse-btn" class="score-btn">Run Fusion Engine ⟶</button>
+          </div>
+          <div class="fusion-output-panel">
+            <div id="fusion-placeholder" class="output-placeholder">
+              <div class="placeholder-icon">⚖️</div>
+              <p>Adjust signals and costs, then click <strong>"Run Fusion Engine"</strong></p>
+            </div>
+            <div id="fusion-results" class="hidden">
+              <div id="fusion-decision-banner" class="fusion-decision-banner"><div class="decision-label">DECISION</div><div id="fusion-decision-text" class="decision-text">—</div></div>
+              <div class="output-block"><h4>Fused Score Breakdown</h4><div class="fusion-breakdown"><div class="breakdown-bar-group" id="fusion-breakdown-bars"></div><div class="fusion-final-score"><span class="final-label">Final Score</span><span id="fusion-final-val" class="final-val">—</span></div></div></div>
+              <div class="output-block"><h4>Expected Cost Analysis</h4><div id="expected-cost-bars" class="expected-cost-bars"></div><div id="fusion-reasoning" class="fusion-reasoning"></div></div>
+              <div class="output-block"><h4>Decision Band Sensitivity</h4><p class="panel-desc">How thresholds shift as cost_false_reject changes</p><div id="sensitivity-chart" class="sensitivity-chart"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ DASHBOARD TAB ═══════ -->
+    <div id="tab-dashboard" class="tab-content hidden">
+      <div class="glass-card rounded-[16px] p-xl">
+        <div class="mb-lg border-b border-outline-variant pb-md">
+          <h2 class="font-headline-lg text-headline-lg text-on-surface">Architecture Overview</h2>
+          <p class="text-body-md text-on-surface-variant mt-sm">Four intelligence signals converge into a single cost-optimal decision</p>
+        </div>
+        <div class="pipeline-container">
+          <div class="pipeline-step" data-step="1"><div class="step-icon">🧠</div><div class="step-num">01</div><h3>Behavior LSTM</h3><p>Sequential order history → 2-layer LSTM → calibrated fraud probability with Integrated Gradients explainability.</p><div class="step-code"><code>P(fraud) = σ(LSTM(X))</code></div></div>
+          <div class="pipeline-arrow">→</div>
+          <div class="pipeline-step" data-step="2"><div class="step-icon">🔗</div><div class="step-num">02</div><h3>Graph Intelligence</h3><p>Shared addresses, payments, devices build a customer graph. Community detection reveals fraud rings.</p><div class="step-code"><code>graph_score ∈ [0, 1]</code></div></div>
+          <div class="pipeline-arrow">→</div>
+          <div class="pipeline-step" data-step="3"><div class="step-icon">🖼️</div><div class="step-num">03</div><h3>Image Forensics</h3><p>HSV histogram + ORB keypoints detect duplicate images. ELA + edge/noise analysis catch manipulation.</p><div class="step-code"><code>image_score ∈ [0, 1]</code></div></div>
+          <div class="pipeline-arrow">→</div>
+          <div class="pipeline-step" data-step="4"><div class="step-icon">⚖️</div><div class="step-num">04</div><h3>Cost-Asymmetric Fusion</h3><p>Weighted fusion of all signals → expected-cost minimization picks the cheapest action: Approve, Review, or Reject.</p><div class="step-code"><code>argmin E[cost]</code></div></div>
+        </div>
+      </div>
+      <div class="glass-card rounded-[16px] p-xl mt-lg">
+        <div class="mb-lg border-b border-outline-variant pb-md">
+          <h2 class="font-headline-lg text-headline-lg text-on-surface">Model Comparison</h2>
+          <p class="text-body-md text-on-surface-variant mt-sm">Hybrid dataset evaluation — real UCI genuine customers + synthetic fraud archetypes</p>
+        </div>
+        <div class="results-grid">
+          <div class="result-card best"><div class="result-card-header"><span class="model-badge lstm">LSTM</span><h3>Baseline LSTM</h3><span class="best-tag">Best AUC</span></div><div class="metrics-grid"><div class="metric"><span class="metric-val">0.916</span><span class="metric-lbl">Precision</span></div><div class="metric"><span class="metric-val">0.962</span><span class="metric-lbl">Recall</span></div><div class="metric"><span class="metric-val">0.939</span><span class="metric-lbl">F1</span></div><div class="metric highlight"><span class="metric-val">0.994</span><span class="metric-lbl">AUC</span></div></div><div class="cost-row"><div class="cost-detail"><span>FP: 21</span><span>FN: 9</span></div><div class="cost-total">₹3,14,370</div></div></div>
+          <div class="result-card"><div class="result-card-header"><span class="model-badge cost">Cost-Aware</span><h3>Cost-Aware LSTM</h3><span class="prod-tag">Production</span></div><div class="metrics-grid"><div class="metric"><span class="metric-val">0.914</span><span class="metric-lbl">Precision</span></div><div class="metric"><span class="metric-val">0.941</span><span class="metric-lbl">Recall</span></div><div class="metric"><span class="metric-val">0.928</span><span class="metric-lbl">F1</span></div><div class="metric highlight"><span class="metric-val">0.992</span><span class="metric-lbl">AUC</span></div></div><div class="cost-row"><div class="cost-detail"><span>FP: 21</span><span>FN: 14</span></div><div class="cost-total">₹3,43,470</div></div></div>
+          <div class="result-card baseline"><div class="result-card-header"><span class="model-badge rf">RF</span><h3>Random Forest (Tabular)</h3><span class="prior-tag">Prior Work</span></div><div class="metrics-grid"><div class="metric"><span class="metric-val">0.819</span><span class="metric-lbl">Precision</span></div><div class="metric"><span class="metric-val">0.912</span><span class="metric-lbl">Recall</span></div><div class="metric"><span class="metric-val">0.863</span><span class="metric-lbl">F1</span></div><div class="metric"><span class="metric-val">0.971</span><span class="metric-lbl">AUC</span></div></div><div class="cost-row"><div class="cost-detail"><span>FP: 48</span><span>FN: 21</span></div><div class="cost-total warning">₹7,20,930</div></div></div>
+        </div>
+        <div class="cost-comparison">
+          <h4>Estimated Business Cost Comparison</h4>
+          <div class="cost-bars">
+            <div class="cost-bar-row"><span class="cost-bar-label">Baseline LSTM</span><div class="cost-bar-track"><div class="cost-bar-fill best" style="width:43.6%"><span>₹3,14,370</span></div></div></div>
+            <div class="cost-bar-row"><span class="cost-bar-label">Cost-Aware LSTM</span><div class="cost-bar-track"><div class="cost-bar-fill cost" style="width:47.6%"><span>₹3,43,470</span></div></div></div>
+            <div class="cost-bar-row"><span class="cost-bar-label">RF Tabular</span><div class="cost-bar-track"><div class="cost-bar-fill rf" style="width:100%"><span>₹7,20,930</span></div></div></div>
+          </div>
+          <p class="cost-note">Cost = FP × ₹12,475 (customer churn) + FN × ₹5,810 (missed fraud). Sequential models save <strong>56%</strong> vs tabular baseline.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FLOATING STATUS -->
+  <div class="fixed bottom-lg right-lg z-50">
+    <div class="bg-surface-container-highest px-lg py-md rounded-full shadow-2xl border border-primary/20 flex items-center gap-lg animate-pulse">
+      <div class="w-2 h-2 rounded-full bg-tertiary"></div>
+      <span class="text-label font-bold text-on-surface tracking-widest uppercase">Live Stream Connected</span>
+    </div>
+  </div>
+</main>
+
+<script src="app.js"></script>
+<!-- ═══════ CASE QUEUE ENGINE ═══════ -->
+<script>
+// Case Queue Data — derived from the project's SCENARIOS and GRAPH_SCENARIOS
+const CQ_CASES = [
+  {
+    id: "CLM-2026-001", scenario: "genuine",
+    customer: "Priya Sharma", account: "3-year account", location: "Chennai, TN",
+    category: "apparel_casual", value: 5399, reason: "wrong_size",
+    behaviorScore: 0.08, imageScore: null, graphScore: 0.05,
+    orderHistory: [0,0,0,0,1],
+    explanation: [
+      "5-order history with consistent low return rate (20%)",
+      "No shared device/address with any flagged account",
+      "Reason code: wrong_size — consistent with genuine returns"
+    ]
+  },
+  {
+    id: "CLM-2026-002", scenario: "wardrobing",
+    customer: "Rahul Menon", account: "11-month account", location: "Mumbai, MH",
+    category: "apparel_event", value: 45699, reason: "changed_mind",
+    behaviorScore: 0.78, imageScore: null, graphScore: 0.25,
+    orderHistory: [0,1,1,0,1],
+    explanation: [
+      "Return filed 2 days after delivery — high-value event wear category",
+      "3 of last 5 orders returned, concentrated in event/apparel categories",
+      "Pattern matches 'wardrobing' signature: buy → use briefly → return"
+    ]
+  },
+  {
+    id: "CLM-2026-003", scenario: "inr",
+    customer: "Deepak Jain", account: "7-month account", location: "Bengaluru, KA",
+    category: "electronics", value: 79200, reason: "item_not_received",
+    behaviorScore: 0.82, imageScore: null, graphScore: 0.40,
+    orderHistory: [0,1,1,0,1],
+    explanation: [
+      "Carrier scan confirms delivery; customer disputes receipt",
+      "3rd 'item not received' claim in 7 months, all high-value electronics",
+      "Shared address with another account that has INR claims"
+    ]
+  },
+  {
+    id: "CLM-2026-004", scenario: "genuine",
+    customer: "Ananya Reddy", account: "2-year account", location: "Hyderabad, TS",
+    category: "home", value: 14399, reason: "wrong_item",
+    behaviorScore: 0.06, imageScore: null, graphScore: 0.05,
+    orderHistory: [0,0,1,0,0],
+    explanation: [
+      "Low overall return rate (14%), long account history",
+      "No connection to any known device/address cluster",
+      "Reason code consistent with warehouse pick error, not fraud"
+    ]
+  },
+  {
+    id: "CLM-2026-005", scenario: "serial",
+    customer: "Vikram Patel", account: "2-month account", location: "Delhi, DL",
+    category: "electronics", value: 91600, reason: "damaged",
+    behaviorScore: 0.91, imageScore: 0.41, graphScore: 0.88,
+    orderHistory: [1,1,1,0,1,1],
+    explanation: [
+      "Device ID shared with 5 other accounts flagged in the last 30 days",
+      "Address matches a cluster of 6 accounts rotating through same 2 delivery addresses",
+      "Return rate 83% across a 2-month-old account — inconsistent with organic behavior",
+      "Image forensics found no tampering — flagged almost entirely by network signal"
+    ]
+  },
+  {
+    id: "CLM-2026-006", scenario: "wardrobing",
+    customer: "Sneha Iyer", account: "5-month account", location: "Pune, MH",
+    category: "apparel_event", value: 7990, reason: "changed_mind",
+    behaviorScore: 0.65, imageScore: null, graphScore: 0.10,
+    orderHistory: [0,1,0,1,0,1],
+    explanation: [
+      "3 returns in 5 months, all event/apparel categories",
+      "Returns within 3 days of delivery consistently",
+      "No network ring signal — isolated account-level wardrobing pattern"
+    ]
+  }
+];
+
+const FUSION_W = { behavior: 0.25, image: 0.40, graph: 0.35 };
+
+function cqComposite(c) {
+  let usedW = FUSION_W.behavior;
+  let score = c.behaviorScore * FUSION_W.behavior;
+  if (c.imageScore !== null) { score += c.imageScore * FUSION_W.image; usedW += FUSION_W.image; }
+  if (c.graphScore !== null) { score += c.graphScore * FUSION_W.graph; usedW += FUSION_W.graph; }
+  return score / usedW;
+}
+function cqTier(score) {
+  if (score < 0.40) return { key:'approve', label:'Auto-approve', color:'#3eddc8', icon:'check_circle' };
+  if (score < 0.65) return { key:'friction', label:'Manual Review', color:'#f59e0b', icon:'visibility' };
+  return { key:'deny', label:'Hold / Deny', color:'#ffb4ab', icon:'block' };
+}
+
+let activeCaseId = CQ_CASES[0].id;
+
+function renderCaseQueue() {
+  const listEl = document.getElementById('cq-claim-list');
+  listEl.innerHTML = '<div class="text-label font-label text-outline uppercase mb-md px-sm">CLAIM QUEUE · ' + CQ_CASES.length + '</div>';
+  CQ_CASES.forEach(c => {
+    const score = cqComposite(c);
+    const t = cqTier(score);
+    const isActive = c.id === activeCaseId;
+    const div = document.createElement('div');
+    div.className = 'queue-item p-md rounded-xl mb-sm' + (isActive ? ' active' : '');
+    div.style.background = isActive ? 'rgba(91,140,255,0.08)' : '#1C2330';
+    div.style.border = '1px solid ' + (isActive ? 'rgba(91,140,255,0.3)' : 'rgba(255,255,255,0.07)');
+    div.onclick = () => { activeCaseId = c.id; renderCaseQueue(); renderCaseDetail(); };
+    div.innerHTML = `
+      <div class="flex justify-between items-center mb-xs">
+        <span class="font-headline-sm text-[13px] text-on-surface font-bold">${c.id}</span>
+        <span class="text-[10px] font-bold px-sm py-[2px] rounded-full" style="background:${t.color}22; color:${t.color};">${t.label.toUpperCase()}</span>
+      </div>
+      <p class="text-[12px] text-on-surface-variant">${c.category.replace(/_/g,' ')} return · ${c.reason.replace(/_/g,' ')}</p>
+      <p class="text-[11px] text-outline mt-xs">₹${c.value.toLocaleString('en-IN')} · risk ${(score*100).toFixed(0)}</p>
+    `;
+    listEl.appendChild(div);
+  });
+
+  // Sidebar active cases
+  const sidebarCases = document.getElementById('sidebar-cases');
+  sidebarCases.innerHTML = '';
+  CQ_CASES.filter(c => cqComposite(c) >= 0.5).slice(0, 3).forEach(c => {
+    const t = cqTier(cqComposite(c));
+    sidebarCases.innerHTML += `<div class="p-md glass-card rounded-xl border-l-4" style="border-left-color:${t.color};">
+      <p class="text-body-sm font-headline-sm mb-1" style="color:${t.color};">${c.id}</p>
+      <p class="text-[11px] text-on-surface-variant">${c.customer} · ₹${c.value.toLocaleString('en-IN')}</p>
+    </div>`;
+  });
+}
+
+function renderCaseDetail() {
+  const c = CQ_CASES.find(x => x.id === activeCaseId);
+  if (!c) return;
+  const score = cqComposite(c);
+  const t = cqTier(score);
+  const riskPct = Math.round(score * 100);
+  const gaugeOffset = 440 - (440 * score * 0.85);
+  const gaugeColor = score > 0.7 ? '#ffb4ab' : score > 0.3 ? '#f59e0b' : '#3eddc8';
+
+  // Graph data
+  const graphData = typeof GRAPH_SCENARIOS !== 'undefined' ? GRAPH_SCENARIOS[c.scenario] : null;
+
+  const detailEl = document.getElementById('cq-detail');
+  detailEl.innerHTML = `
+    <!-- HERO: Customer Profile & Risk Gauge -->
+    <div class="grid grid-cols-12 gap-lg animate-in">
+      <div class="col-span-8 glass-card rounded-[16px] p-lg flex items-center gap-xxl relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-lg opacity-10"><span class="material-symbols-outlined text-[100px]">verified_user</span></div>
+        <div class="flex-1">
+          <h2 class="font-headline-lg text-headline-lg text-on-surface">${c.customer}</h2>
+          <div class="flex gap-md mt-sm flex-wrap">
+            <span class="px-md py-xs bg-surface-container-high rounded-full border border-outline-variant text-label font-label text-outline">${c.id}</span>
+            <span class="px-md py-xs bg-surface-container-high rounded-full border border-outline-variant text-label font-label text-outline">${c.account}</span>
+          </div>
+          <div class="flex gap-md mt-md flex-wrap">
+            <div class="flex items-center gap-xs text-primary"><span class="material-symbols-outlined text-sm">location_on</span><span class="text-body-sm">${c.location}</span></div>
+            <div class="flex items-center gap-xs text-on-surface-variant"><span class="material-symbols-outlined text-sm">category</span><span class="text-body-sm">${c.category.replace(/_/g,' ')}</span></div>
+            <div class="flex items-center gap-xs text-tertiary"><span class="material-symbols-outlined text-sm">currency_rupee</span><span class="text-body-sm">₹${c.value.toLocaleString('en-IN')}</span></div>
+          </div>
+        </div>
+        <div class="flex flex-col items-center justify-center border-l border-outline-variant pl-xxl">
+          <div class="relative w-36 h-36">
+            <svg class="w-full h-full transform -rotate-90">
+              <circle class="text-surface-container-highest" cx="72" cy="72" fill="transparent" r="60" stroke="currentColor" stroke-width="10"></circle>
+              <circle class="risk-gauge-circle" cx="72" cy="72" fill="transparent" r="60" stroke="${gaugeColor}" stroke-width="10" stroke-dasharray="377" stroke-dashoffset="${377 - 377 * score * 0.85}" stroke-linecap="round"></circle>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="font-display text-[36px] leading-none" style="color:${gaugeColor}">${riskPct}</span>
+              <span class="text-label font-label text-outline uppercase">Risk Score</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-span-4 flex flex-col gap-md">
+        <button class="flex-1 rounded-xl flex items-center justify-between px-lg hover:brightness-110 transition-all group" style="background:${t.key==='deny'?'#93000a':t.key==='friction'?'#4A3B22':'#003731'}; color:${t.color};">
+          <div class="flex items-center gap-md"><span class="material-symbols-outlined text-[28px]">${t.icon}</span><div class="text-left"><p class="font-headline-sm text-[16px]">${t.label}</p><p class="text-[11px] opacity-80">AI Recommendation</p></div></div>
+        </button>
+        <button class="flex-1 bg-surface-container text-primary border border-primary/20 rounded-xl flex items-center gap-md px-lg hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined text-[28px]">forward_to_inbox</span>
+          <div class="text-left"><p class="font-headline-sm text-[16px] text-on-surface">Escalate</p><p class="text-[11px] text-outline">Senior Review</p></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- INTELLIGENCE CARDS -->
+    <div class="grid grid-cols-12 gap-lg animate-in animate-in-d1">
+      <!-- Behavioral -->
+      <div class="col-span-4 glass-card rounded-[16px] p-lg flex flex-col">
+        <div class="flex items-center justify-between mb-md">
+          <div class="flex items-center gap-sm"><span class="material-symbols-outlined text-primary">psychology</span><h3 class="font-headline-sm text-[16px] text-on-surface">Behavioral</h3></div>
+          <span class="font-metric-sm text-metric-sm" style="color:${c.behaviorScore>0.6?'#ffb4ab':c.behaviorScore>0.3?'#f59e0b':'#3eddc8'}">${c.behaviorScore.toFixed(2)}</span>
+        </div>
+        <div class="space-y-md flex-1">
+          <div class="flex justify-between items-end">
+            <div><p class="text-[10px] text-outline uppercase mb-xs">Return Ratio</p><p class="font-metric-lg text-metric-lg" style="color:${c.behaviorScore>0.5?'#ffb4ab':'#3eddc8'}">${Math.round(c.orderHistory.filter(h=>h).length/c.orderHistory.length*100)}%</p></div>
+            <div class="text-right"><p class="text-[10px] text-outline uppercase mb-xs">Orders</p><p class="font-metric-lg text-metric-lg text-on-surface">${c.orderHistory.length}</p></div>
+          </div>
+          <div class="pt-md border-t border-outline-variant">
+            <p class="text-[10px] text-outline uppercase mb-md">Order Timeline</p>
+            <div class="flex items-end gap-[3px] h-12">
+              ${c.orderHistory.map((h, i) => {
+                const height = h ? 75 + Math.random()*25 : 20 + Math.random()*20;
+                return `<div style="flex:1; height:${height}%; border-radius:2px; background:${h?'#5b8cff':'#31353c'}; transition:all 0.3s;"></div>`;
+              }).join('')}
+            </div>
+            <div class="flex justify-between mt-xs text-[9px] text-outline-variant font-mono">
+              ${c.orderHistory.map((_, i) => `<span>${i+1}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Image -->
+      <div class="col-span-4 glass-card rounded-[16px] p-lg flex flex-col">
+        <div class="flex items-center justify-between mb-md">
+          <div class="flex items-center gap-sm"><span class="material-symbols-outlined text-secondary">image_search</span><h3 class="font-headline-sm text-[16px] text-on-surface">Image Intel</h3></div>
+          <span class="font-metric-sm text-metric-sm" style="color:${c.imageScore===null?'#8d909f':c.imageScore>0.6?'#ffb4ab':c.imageScore>0.3?'#f59e0b':'#3eddc8'}">${c.imageScore===null?'N/A':c.imageScore.toFixed(2)}</span>
+        </div>
+        <div class="flex-1 flex items-center justify-center bg-surface-container-lowest rounded-xl border border-outline-variant">
+          ${c.imageScore !== null ?
+            `<div class="text-center p-lg"><span class="material-symbols-outlined text-[40px] text-secondary mb-md">image_search</span><p class="font-metric-sm text-secondary">${(c.imageScore*100).toFixed(0)}% manipulation score</p></div>` :
+            `<div class="text-center p-lg"><span class="material-symbols-outlined text-[40px] text-outline mb-md">hide_image</span><p class="text-[12px] text-outline">No image submitted</p><p class="text-[10px] text-outline-variant mt-xs">Claim type does not require photo evidence</p></div>`
+          }
+        </div>
+      </div>
+      <!-- Network Graph -->
+      <div class="col-span-4 glass-card rounded-[16px] p-lg flex flex-col">
+        <div class="flex items-center justify-between mb-md">
+          <div class="flex items-center gap-sm"><span class="material-symbols-outlined text-tertiary">hub</span><h3 class="font-headline-sm text-[16px] text-on-surface">Network Graph</h3></div>
+          <span class="font-metric-sm text-metric-sm" style="color:${c.graphScore>0.6?'#ffb4ab':c.graphScore>0.3?'#f59e0b':'#3eddc8'}">${c.graphScore.toFixed(2)}</span>
+        </div>
+        <div class="flex-1 bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden relative" id="cq-graph-container" style="min-height:150px;">
+          ${graphData ? renderCQGraph(graphData.nodes, graphData.edges) : '<div class="flex items-center justify-center h-full"><span class="text-[12px] text-outline">No graph data</span></div>'}
+        </div>
+      </div>
+    </div>
+
+    <!-- FUSION BAR + EXPLAINABILITY -->
+    <div class="grid grid-cols-12 gap-lg animate-in animate-in-d2">
+      <div class="col-span-7 glass-card rounded-[16px] p-lg">
+        <div class="flex items-center justify-between mb-lg">
+          <div class="flex items-center gap-md"><div class="p-sm bg-primary/20 rounded-lg"><span class="material-symbols-outlined text-primary">analytics</span></div><div><h3 class="font-headline-sm text-[16px] text-on-surface">Evidence Fusion</h3><p class="text-[12px] text-outline">Multi-modal probability calibration</p></div></div>
+          <div class="text-right"><p class="text-[10px] text-outline uppercase">Composite Risk</p><p class="font-metric-lg text-metric-lg" style="color:${gaugeColor}">${score.toFixed(3)}</p></div>
+        </div>
+        <div class="space-y-lg">
+          <div class="space-y-xs"><div class="flex justify-between text-[11px]"><span class="text-on-surface font-bold">Behavioral LSTM</span><span class="text-outline">w=0.25 · score ${c.behaviorScore.toFixed(2)}</span></div><div class="h-2 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full bg-primary rounded-full" style="width:${c.behaviorScore*100}%; transition:width 1s;"></div></div></div>
+          <div class="space-y-xs"><div class="flex justify-between text-[11px]"><span class="text-on-surface font-bold">Image Forensics</span><span class="text-outline">w=0.40 · score ${c.imageScore===null?'N/A':c.imageScore.toFixed(2)}</span></div><div class="h-2 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full bg-secondary rounded-full" style="width:${c.imageScore===null?0:c.imageScore*100}%; transition:width 1s;"></div></div></div>
+          <div class="space-y-xs"><div class="flex justify-between text-[11px]"><span class="text-on-surface font-bold">Graph Intelligence</span><span class="text-outline">w=0.35 · score ${c.graphScore.toFixed(2)}</span></div><div class="h-2 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full bg-tertiary rounded-full" style="width:${c.graphScore*100}%; transition:width 1s;"></div></div></div>
+        </div>
+      </div>
+      <div class="col-span-5 glass-card rounded-[16px] p-lg">
+        <h3 class="font-headline-sm text-[16px] text-on-surface mb-lg">Why This Score</h3>
+        <div class="space-y-sm">
+          ${c.explanation.map(e => `
+            <div class="flex items-start gap-md p-md bg-surface-container-high rounded-xl border border-outline-variant">
+              <span class="material-symbols-outlined text-primary text-[18px] mt-[2px]">arrow_right</span>
+              <span class="text-body-sm text-on-surface">${e}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderCQGraph(nodes, edges) {
+  const w = 200, h = 150, cx = w/2, cy = h/2, r = 50;
+  const pos = {};
+  nodes.forEach((n, i) => {
+    if (nodes.length === 1) { pos[n.id] = {x:cx, y:cy}; }
+    else { const a = (i/nodes.length)*2*Math.PI - Math.PI/2; pos[n.id] = {x:cx+r*Math.cos(a), y:cy+r*Math.sin(a)}; }
+  });
+  let svg = `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:100%;">`;
+  edges.forEach(e => {
+    const p1=pos[e.source], p2=pos[e.target];
+    if(p1&&p2) svg += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="#434653" stroke-width="1" opacity="0.5"/>`;
+  });
+  nodes.forEach(n => {
+    const p=pos[n.id]; const fill=n.isTarget?'#5b8cff':(n.risk>0.5?'#ffb4ab':'#f59e0b'); const nr=n.isTarget?8:5;
+    svg += `<circle cx="${p.x}" cy="${p.y}" r="${nr}" fill="${fill}" stroke="${n.isTarget?'#fff':'rgba(255,255,255,0.2)'}" stroke-width="1.5" style="filter:drop-shadow(0 0 4px ${fill}66);"/>`;
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+// Tab Navigation
+document.addEventListener('DOMContentLoaded', () => {
+  const tabLinks = document.querySelectorAll('.tab-link');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  function activateTab(tabId) {
+    tabLinks.forEach(l => {
+      l.classList.remove('text-primary','font-bold','border-r-2','border-primary','bg-surface-variant/50');
+      l.classList.add('text-on-surface-variant','font-medium','hover:bg-surface-variant','transition-colors');
+    });
+    const activeLink = document.querySelector(`[data-tab="${tabId}"]`);
+    if (activeLink) {
+      activeLink.classList.remove('text-on-surface-variant','font-medium','hover:bg-surface-variant','transition-colors');
+      activeLink.classList.add('text-primary','font-bold','border-r-2','border-primary','bg-surface-variant/50');
+    }
+    tabContents.forEach(tc => { tc.classList.remove('block'); tc.classList.add('hidden'); });
+    const target = document.getElementById(tabId);
+    if (target) { target.classList.remove('hidden'); target.classList.add('block'); }
+  }
+
+  tabLinks.forEach(link => {
+    link.addEventListener('click', e => { e.preventDefault(); activateTab(link.getAttribute('data-tab')); });
+  });
+
+  // Default: Case Queue active
+  activateTab('tab-queue');
+  renderCaseQueue();
+  renderCaseDetail();
+});
+</script>
+
+<link rel="stylesheet" href="style.css">
+</body></html>
