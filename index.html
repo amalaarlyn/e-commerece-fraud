@@ -284,77 +284,172 @@
         <div class="mb-lg border-b border-outline-variant pb-md">
           <div class="text-primary text-label font-bold tracking-widest uppercase mb-sm">Module 3</div>
           <h2 class="font-headline-lg text-headline-lg text-on-surface">Image Intelligence</h2>
-          <p class="text-body-md text-on-surface-variant mt-sm">Duplicate detection via HSV + ORB keypoints, manipulation analysis via ELA + edge/noise heuristics</p>
+          <p class="text-body-md text-on-surface-variant mt-sm">Upload product &amp; receipt images — runs forensics, OCR, tampering detection, and cross-validation in one pipeline</p>
         </div>
-        <div class="dynamic-inputs" style="margin-bottom:20px; display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <label style="font-size:0.8rem; font-weight:600; color:#c3c6d6;">HSV Similarity</label>
-            <div style="display:flex; gap:10px; align-items:center;">
-              <input type="range" id="image-input-hsv" value="20" min="0" max="100" oninput="document.getElementById('image-input-hsv-val').innerText=this.value+'%'; calculateImageScore()" style="flex:1; accent-color:#3eddc8;">
-              <span id="image-input-hsv-val" class="weight-tag" style="width:35px; color:#3eddc8;">20%</span>
+
+        <!-- ═══ DUAL IMAGE UPLOAD AREA ═══ -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;">
+
+          <!-- Product Image Upload -->
+          <div id="product-upload-zone" style="border:2px dashed #434653; border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:all 0.3s ease; background:rgba(0,0,0,0.15); position:relative; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center;"
+               ondragover="event.preventDefault(); this.style.borderColor='#5b8cff'; this.style.background='rgba(91,140,255,0.08)'"
+               ondragleave="this.style.borderColor='#434653'; this.style.background='rgba(0,0,0,0.15)'"
+               ondrop="event.preventDefault(); this.style.borderColor='#434653'; this.style.background='rgba(0,0,0,0.15)'; handleProductDrop(event)"
+               onclick="document.getElementById('product-file-input').click()">
+            <input type="file" id="product-file-input" accept="image/*" style="display:none" onchange="handleProductSelect(event)">
+            <div id="product-upload-placeholder">
+              <span class="material-symbols-outlined" style="font-size:48px; color:#5b8cff; display:block; margin-bottom:8px;">add_a_photo</span>
+              <p style="font-weight:600; color:#dfe2eb; margin:0 0 4px;">Product / Damage Photo</p>
+              <p style="font-size:0.75rem; color:#8d909f; margin:0;">Drag & drop or click to upload</p>
+              <p style="font-size:0.7rem; color:#636673; margin-top:4px;">JPG, PNG, WEBP — max 10MB</p>
             </div>
+            <img id="product-preview" style="display:none; max-width:100%; max-height:180px; border-radius:8px; object-fit:contain;" alt="Product preview">
+            <button id="product-remove-btn" onclick="event.stopPropagation(); removeProductImage()" style="display:none; position:absolute; top:8px; right:8px; background:rgba(239,68,68,0.8); border:none; color:white; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; line-height:28px;">✕</button>
           </div>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <label style="font-size:0.8rem; font-weight:600; color:#c3c6d6;">ORB Matches</label>
-            <input type="number" id="image-input-orb" value="5" min="0" onchange="calculateImageScore()" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid #434653; color:#dfe2eb; padding:6px; border-radius:4px; font-family:'JetBrains Mono';">
-          </div>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <label style="font-size:0.8rem; font-weight:600; color:#c3c6d6;">Edge Disparity</label>
-            <div style="display:flex; gap:10px; align-items:center;">
-              <input type="range" id="image-input-edge" value="5" min="0" max="100" oninput="document.getElementById('image-input-edge-val').innerText=this.value+'%'; calculateImageScore()" style="flex:1; accent-color:#3eddc8;">
-              <span id="image-input-edge-val" class="weight-tag" style="width:35px; color:#3eddc8;">5%</span>
+
+          <!-- Receipt Image Upload -->
+          <div id="receipt-upload-zone" style="border:2px dashed #434653; border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:all 0.3s ease; background:rgba(0,0,0,0.15); position:relative; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center;"
+               ondragover="event.preventDefault(); this.style.borderColor='#3eddc8'; this.style.background='rgba(62,221,200,0.08)'"
+               ondragleave="this.style.borderColor='#434653'; this.style.background='rgba(0,0,0,0.15)'"
+               ondrop="event.preventDefault(); this.style.borderColor='#434653'; this.style.background='rgba(0,0,0,0.15)'; handleReceiptDrop(event)"
+               onclick="document.getElementById('receipt-file-input').click()">
+            <input type="file" id="receipt-file-input" accept="image/*" style="display:none" onchange="handleReceiptSelect(event)">
+            <div id="receipt-upload-placeholder">
+              <span class="material-symbols-outlined" style="font-size:48px; color:#3eddc8; display:block; margin-bottom:8px;">receipt_long</span>
+              <p style="font-weight:600; color:#dfe2eb; margin:0 0 4px;">Purchase Receipt</p>
+              <p style="font-size:0.75rem; color:#8d909f; margin:0;">Drag & drop or click to upload</p>
+              <p style="font-size:0.7rem; color:#636673; margin-top:4px;">JPG, PNG, WEBP — max 10MB</p>
             </div>
-          </div>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <label style="font-size:0.8rem; font-weight:600; color:#c3c6d6;">Noise Variance</label>
-            <div style="display:flex; gap:10px; align-items:center;">
-              <input type="range" id="image-input-noise" value="2" min="0" max="100" oninput="document.getElementById('image-input-noise-val').innerText=this.value+'%'; calculateImageScore()" style="flex:1; accent-color:#3eddc8;">
-              <span id="image-input-noise-val" class="weight-tag" style="width:35px; color:#3eddc8;">2%</span>
-            </div>
-          </div>
-          <div style="grid-column:1/-1; display:flex; align-items:center; gap:10px;">
-            <input type="checkbox" id="image-input-exact" onchange="calculateImageScore()" style="accent-color:#3eddc8; width:16px; height:16px;">
-            <label for="image-input-exact" style="margin:0; cursor:pointer; font-size:0.8rem; color:#dfe2eb;">Flag: Exact Duplicate Match Detected</label>
+            <img id="receipt-preview" style="display:none; max-width:100%; max-height:180px; border-radius:8px; object-fit:contain;" alt="Receipt preview">
+            <button id="receipt-remove-btn" onclick="event.stopPropagation(); removeReceiptImage()" style="display:none; position:absolute; top:8px; right:8px; background:rgba(239,68,68,0.8); border:none; color:white; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; line-height:28px;">✕</button>
           </div>
         </div>
-        <div class="image-intel-layout">
-          <div class="image-card">
-            <h3>Scoring Architecture</h3>
-            <div class="scoring-weights-visual"><div class="weight-bar"><div class="weight-fill similarity" style="width:70%"><span>Similarity 70%</span></div><div class="weight-fill manipulation" style="width:30%"><span>Manipulation 30%</span></div></div></div>
-            <div class="scoring-thresholds">
-              <div class="threshold-item"><span class="threshold-label">Exact Duplicate Floor</span><span class="threshold-val critical">≥ 0.95</span></div>
-              <div class="threshold-item"><span class="threshold-label">Near Duplicate Floor</span><span class="threshold-val high">≥ 0.80</span></div>
-              <div class="threshold-item"><span class="threshold-label">Manipulation-Only Cap</span><span class="threshold-val medium">≤ 0.75</span></div>
+
+        <!-- ═══ CLAIM METADATA (for cross-validation) ═══ -->
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:24px;">
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <label style="font-size:0.75rem; font-weight:600; color:#8d909f; text-transform:uppercase; letter-spacing:0.05em;">Claim ID</label>
+            <input type="text" id="img-claim-id" value="CLM-2026-00142" placeholder="CLM-XXXX" style="background:rgba(0,0,0,0.25); border:1px solid #434653; color:#dfe2eb; padding:8px 10px; border-radius:6px; font-family:'JetBrains Mono'; font-size:0.85rem;">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <label style="font-size:0.75rem; font-weight:600; color:#8d909f; text-transform:uppercase; letter-spacing:0.05em;">Order Date</label>
+            <input type="date" id="img-order-date" value="2026-09-15" style="background:rgba(0,0,0,0.25); border:1px solid #434653; color:#dfe2eb; padding:8px 10px; border-radius:6px; font-family:'JetBrains Mono'; font-size:0.85rem;">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <label style="font-size:0.75rem; font-weight:600; color:#8d909f; text-transform:uppercase; letter-spacing:0.05em;">Claim Amount (₹)</label>
+            <input type="number" id="img-claim-amount" value="2499" min="0" step="0.01" style="background:rgba(0,0,0,0.25); border:1px solid #434653; color:#dfe2eb; padding:8px 10px; border-radius:6px; font-family:'JetBrains Mono'; font-size:0.85rem;">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <label style="font-size:0.75rem; font-weight:600; color:#8d909f; text-transform:uppercase; letter-spacing:0.05em;">Product Name</label>
+            <input type="text" id="img-claim-product" value="Wireless Headphones" placeholder="Product..." style="background:rgba(0,0,0,0.25); border:1px solid #434653; color:#dfe2eb; padding:8px 10px; border-radius:6px; font-family:'Inter'; font-size:0.85rem;">
+          </div>
+        </div>
+
+        <!-- ═══ ANALYZE BUTTON ═══ -->
+        <div style="display:flex; gap:12px; margin-bottom:24px;">
+          <button id="analyze-dual-btn" onclick="analyzeDualImages()" class="score-btn" style="flex:1; padding:14px; font-size:1rem; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #5b8cff 0%, #3eddc8 100%); color:#0D1117; border:none; cursor:pointer; transition:all 0.3s ease; letter-spacing:0.02em;">
+            <span class="material-symbols-outlined" style="vertical-align:middle; margin-right:6px; font-size:20px;">search_insights</span>
+            Analyze Both Images
+          </button>
+          <button onclick="runMockDualAnalysis()" style="padding:14px 20px; font-size:0.85rem; font-weight:600; border-radius:10px; background:rgba(91,140,255,0.12); color:#5b8cff; border:1px solid rgba(91,140,255,0.3); cursor:pointer; transition:all 0.3s ease; white-space:nowrap;" onmouseover="this.style.background='rgba(91,140,255,0.2)'" onmouseout="this.style.background='rgba(91,140,255,0.12)'">
+            Run Mock Demo
+          </button>
+        </div>
+
+        <!-- ═══ LOADING SPINNER ═══ -->
+        <div id="dual-analysis-loading" style="display:none; text-align:center; padding:40px;">
+          <div style="display:inline-block; width:40px; height:40px; border:3px solid rgba(91,140,255,0.2); border-top-color:#5b8cff; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+          <p style="color:#8d909f; margin-top:12px; font-size:0.9rem;">Analyzing images — running OCR, forensics & cross-validation...</p>
+        </div>
+        <style>@keyframes spin { to { transform:rotate(360deg); } }</style>
+
+        <!-- ═══ RESULTS PANEL ═══ -->
+        <div id="dual-analysis-results" style="display:none;">
+
+          <!-- Fused Score Banner -->
+          <div id="dual-decision-banner" style="border-radius:12px; padding:20px 24px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg, rgba(62,221,200,0.1), rgba(91,140,255,0.1)); border:1px solid rgba(62,221,200,0.2);">
+            <div>
+              <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:#8d909f; font-weight:700;">FUSED DECISION</div>
+              <div id="dual-decision-text" style="font-size:1.6rem; font-weight:800; font-family:'Space Grotesk'; margin-top:2px;">—</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:#8d909f; font-weight:700;">COMBINED RISK SCORE</div>
+              <div id="dual-fused-score" style="font-size:2rem; font-weight:800; font-family:'JetBrains Mono'; color:#3eddc8;">—</div>
             </div>
           </div>
-          <div class="image-card">
-            <h3>Analysis Result</h3>
-            <div class="image-result-display">
-              <div class="image-score-ring">
-                <svg viewBox="0 0 120 120" class="score-ring-svg">
-                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
-                  <circle id="image-score-fill" cx="60" cy="60" r="52" fill="none" stroke="url(#image-ring-grad)" stroke-width="8" stroke-dasharray="326.7" stroke-dashoffset="320.1" stroke-linecap="round" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s ease"/>
-                  <defs><linearGradient id="image-ring-grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#ef4444"/><stop offset="100%" style="stop-color:#ec4899"/></linearGradient></defs>
-                  <text id="image-score-text" x="60" y="56" text-anchor="middle" fill="#fff" font-size="22" font-weight="800">0.02</text>
-                  <text x="60" y="72" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9">IMAGE SCORE</text>
+
+          <!-- Two-column: Product + Receipt results -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+
+            <!-- Product Image Results -->
+            <div style="background:rgba(0,0,0,0.2); border:1px solid rgba(91,140,255,0.15); border-radius:12px; padding:20px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                <span class="material-symbols-outlined" style="color:#5b8cff;">image_search</span>
+                <h3 style="margin:0; font-family:'Space Grotesk'; font-size:1rem; font-weight:700; color:#dfe2eb;">Product Image Forensics</h3>
+              </div>
+              <div id="product-score-display" style="text-align:center; margin-bottom:16px;">
+                <svg viewBox="0 0 120 120" style="width:100px; height:100px;">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="7"/>
+                  <circle id="product-score-ring" cx="60" cy="60" r="50" fill="none" stroke="#5b8cff" stroke-width="7" stroke-dasharray="314.16" stroke-dashoffset="314.16" stroke-linecap="round" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1.2s ease"/>
+                  <text id="product-score-val" x="60" y="58" text-anchor="middle" fill="#fff" font-size="20" font-weight="800">—</text>
+                  <text x="60" y="74" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7.5" font-weight="600">PRODUCT RISK</text>
                 </svg>
               </div>
-              <div class="image-flags-list" id="image-flags-list">
-                <div class="flag-item low"><span class="flag-code">CLEAN_IMAGE</span><span class="flag-msg">No duplicates or manipulation artifacts found.</span></div>
+              <div id="product-flags-container" style="font-size:0.8rem;"></div>
+            </div>
+
+            <!-- Receipt Results -->
+            <div style="background:rgba(0,0,0,0.2); border:1px solid rgba(62,221,200,0.15); border-radius:12px; padding:20px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                <span class="material-symbols-outlined" style="color:#3eddc8;">receipt_long</span>
+                <h3 style="margin:0; font-family:'Space Grotesk'; font-size:1rem; font-weight:700; color:#dfe2eb;">Receipt Analysis</h3>
               </div>
+              <div id="receipt-score-display" style="text-align:center; margin-bottom:16px;">
+                <svg viewBox="0 0 120 120" style="width:100px; height:100px;">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="7"/>
+                  <circle id="receipt-score-ring" cx="60" cy="60" r="50" fill="none" stroke="#3eddc8" stroke-width="7" stroke-dasharray="314.16" stroke-dashoffset="314.16" stroke-linecap="round" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1.2s ease"/>
+                  <text id="receipt-score-val" x="60" y="58" text-anchor="middle" fill="#fff" font-size="20" font-weight="800">—</text>
+                  <text x="60" y="74" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7.5" font-weight="600">RECEIPT RISK</text>
+                </svg>
+              </div>
+              <div id="receipt-details-container" style="font-size:0.8rem;"></div>
             </div>
           </div>
-          <div class="image-card full-width">
-            <h3>Detection Pipeline</h3>
-            <div class="detection-pipeline">
-              <div class="detect-step"><div class="detect-icon">📸</div><h4>Preprocessing</h4><p>Resize, LAB/HSV conversion, histogram normalization</p></div>
-              <div class="detect-arrow">→</div>
-              <div class="detect-step"><div class="detect-icon">🔍</div><h4>Similarity Check</h4><p>HSV histogram correlation + ORB keypoint matching</p></div>
-              <div class="detect-arrow">→</div>
-              <div class="detect-step"><div class="detect-icon">🔬</div><h4>Manipulation Check</h4><p>Edge disparity, noise variance, ELA analysis</p></div>
-              <div class="detect-arrow">→</div>
-              <div class="detect-step"><div class="detect-icon">📊</div><h4>Score & Flags</h4><p>Weighted fusion with floors/caps → Result</p></div>
+
+          <!-- OCR Extracted Fields -->
+          <div id="ocr-fields-panel" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px; margin-bottom:20px; display:none;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+              <span class="material-symbols-outlined" style="color:#d6baff;">text_snippet</span>
+              <h3 style="margin:0; font-family:'Space Grotesk'; font-size:1rem; font-weight:700; color:#dfe2eb;">OCR Extracted Fields</h3>
+              <span id="ocr-confidence-badge" style="margin-left:auto; font-size:0.7rem; padding:3px 10px; border-radius:20px; font-weight:700; font-family:'JetBrains Mono';"></span>
             </div>
+            <div id="ocr-fields-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;"></div>
+            <div id="ocr-line-items" style="margin-top:12px;"></div>
+          </div>
+
+          <!-- Combined Reasons -->
+          <div style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+              <span class="material-symbols-outlined" style="color:#ffb4ab;">warning</span>
+              <h3 style="margin:0; font-family:'Space Grotesk'; font-size:1rem; font-weight:700; color:#dfe2eb;">Risk Explanations</h3>
+            </div>
+            <ul id="combined-reasons-list" style="list-style:none; padding:0; margin:0; font-size:0.82rem; color:#c3c6d6;"></ul>
+          </div>
+        </div>
+
+        <!-- ═══ DETECTION PIPELINE VISUAL ═══ -->
+        <div class="image-card full-width" style="margin-top:24px;">
+          <h3>Dual-Image Detection Pipeline</h3>
+          <div class="detection-pipeline">
+            <div class="detect-step"><div class="detect-icon">📸</div><h4>Upload</h4><p>Product photo + receipt image</p></div>
+            <div class="detect-arrow">→</div>
+            <div class="detect-step"><div class="detect-icon">🔍</div><h4>Product Forensics</h4><p>ELA, edge/noise, similarity, duplicate check</p></div>
+            <div class="detect-arrow">→</div>
+            <div class="detect-step"><div class="detect-icon">🧾</div><h4>Receipt OCR</h4><p>Tesseract text extraction + field parsing</p></div>
+            <div class="detect-arrow">→</div>
+            <div class="detect-step"><div class="detect-icon">🔬</div><h4>Tampering + Cross-Val</h4><p>Font/alignment analysis, receipt vs. claim data</p></div>
+            <div class="detect-arrow">→</div>
+            <div class="detect-step"><div class="detect-icon">⚖️</div><h4>Score Fusion</h4><p>55% product + 45% receipt → Decision</p></div>
           </div>
         </div>
       </div>

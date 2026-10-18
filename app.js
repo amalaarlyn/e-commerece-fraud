@@ -1009,8 +1009,409 @@ function calculateImageScore() {
 document.addEventListener("DOMContentLoaded", () => {
   setTimeout(() => {
     calculateGraphScore();
-    calculateImageScore();
+    if (typeof calculateImageScore === 'function') {
+      try { calculateImageScore(); } catch(e) { /* tab may have changed */ }
+    }
   }, 100);
 });
 
 
+/* ═══════════════════════════════════════════════════════════════════════
+   DUAL IMAGE UPLOAD & ANALYSIS
+   Product image + Receipt image → Backend API → Fused risk score
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const DUAL_API_BASE = "http://localhost:8001";
+
+// State for uploaded files
+let _productFile = null;
+let _receiptFile = null;
+
+// --- File Upload Handlers ---
+
+function handleProductDrop(e) {
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    setProductFile(files[0]);
+  } else {
+    alert("Could not detect a file. If you are dragging an image directly from another website, please right-click and save it to your computer first, then upload it.");
+  }
+}
+function handleProductSelect(e) {
+  if (e.target.files.length > 0) setProductFile(e.target.files[0]);
+}
+function handleReceiptDrop(e) {
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    setReceiptFile(files[0]);
+  } else {
+    alert("Could not detect a file. If you are dragging an image directly from another website, please right-click and save it to your computer first, then upload it.");
+  }
+}
+function handleReceiptSelect(e) {
+  if (e.target.files.length > 0) setReceiptFile(e.target.files[0]);
+}
+
+function isImageFile(file) {
+  if (!file) return false;
+  if (file.type.startsWith("image/")) return true;
+  const name = file.name.toLowerCase();
+  return name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".webp") || name.endsWith(".heic");
+}
+
+function setProductFile(file) {
+  if (!isImageFile(file)) {
+    alert("Please upload a valid image file (JPG, PNG, etc). If you are dragging an image directly from another website, it may not work — please right-click and save the image to your computer first, then upload it here.");
+    return;
+  }
+  _productFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById("product-preview").src = e.target.result;
+    document.getElementById("product-preview").style.display = "block";
+    document.getElementById("product-upload-placeholder").style.display = "none";
+    document.getElementById("product-remove-btn").style.display = "block";
+    document.getElementById("product-upload-zone").style.borderColor = "#5b8cff";
+    document.getElementById("product-upload-zone").style.borderStyle = "solid";
+  };
+  reader.readAsDataURL(file);
+}
+
+function setReceiptFile(file) {
+  if (!isImageFile(file)) {
+    alert("Please upload a valid image file (JPG, PNG, etc). If you are dragging an image directly from another website, it may not work — please right-click and save the image to your computer first, then upload it here.");
+    return;
+  }
+  _receiptFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById("receipt-preview").src = e.target.result;
+    document.getElementById("receipt-preview").style.display = "block";
+    document.getElementById("receipt-upload-placeholder").style.display = "none";
+    document.getElementById("receipt-remove-btn").style.display = "block";
+    document.getElementById("receipt-upload-zone").style.borderColor = "#3eddc8";
+    document.getElementById("receipt-upload-zone").style.borderStyle = "solid";
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeProductImage() {
+  _productFile = null;
+  document.getElementById("product-preview").style.display = "none";
+  document.getElementById("product-upload-placeholder").style.display = "block";
+  document.getElementById("product-remove-btn").style.display = "none";
+  document.getElementById("product-upload-zone").style.borderColor = "#434653";
+  document.getElementById("product-upload-zone").style.borderStyle = "dashed";
+  document.getElementById("product-file-input").value = "";
+}
+
+function removeReceiptImage() {
+  _receiptFile = null;
+  document.getElementById("receipt-preview").style.display = "none";
+  document.getElementById("receipt-upload-placeholder").style.display = "block";
+  document.getElementById("receipt-remove-btn").style.display = "none";
+  document.getElementById("receipt-upload-zone").style.borderColor = "#434653";
+  document.getElementById("receipt-upload-zone").style.borderStyle = "dashed";
+  document.getElementById("receipt-file-input").value = "";
+}
+
+
+// --- Analyze (send to backend API) ---
+
+async function analyzeDualImages() {
+  if (!_productFile || !_receiptFile) {
+    alert("Please upload both a product image and a receipt image.");
+    return;
+  }
+
+  const loading = document.getElementById("dual-analysis-loading");
+  const results = document.getElementById("dual-analysis-results");
+  loading.style.display = "block";
+  results.style.display = "none";
+
+  const formData = new FormData();
+  formData.append("product_image", _productFile);
+  formData.append("receipt_image", _receiptFile);
+  formData.append("claim_id", document.getElementById("img-claim-id").value);
+  formData.append("customer_id", "CUST_DASHBOARD");
+  formData.append("order_date", document.getElementById("img-order-date").value);
+  formData.append("claim_amount", document.getElementById("img-claim-amount").value);
+  formData.append("claim_product", document.getElementById("img-claim-product").value);
+
+  try {
+    const resp = await fetch(`${DUAL_API_BASE}/score_dual`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!resp.ok) throw new Error(`API error: ${resp.status}`);
+    const data = await resp.json();
+    loading.style.display = "none";
+    renderDualResults(data);
+  } catch (err) {
+    loading.style.display = "none";
+    console.error("Dual analysis API error:", err);
+    // Fall back to mock if backend is unreachable
+    alert("Backend API not reachable at " + DUAL_API_BASE + ". Running mock demo instead.\n\nTo use live analysis, start the API:\n  uvicorn dual_image_api:app --port 8001");
+    runMockDualAnalysis();
+  }
+}
+
+
+// --- Mock Demo (client-side, no backend needed) ---
+
+function runMockDualAnalysis() {
+  const loading = document.getElementById("dual-analysis-loading");
+  const results = document.getElementById("dual-analysis-results");
+  loading.style.display = "block";
+  results.style.display = "none";
+
+  // Simulate processing delay
+  setTimeout(() => {
+    const mockData = generateMockDualResult();
+    loading.style.display = "none";
+    renderDualResults(mockData);
+  }, 1800);
+}
+
+function generateMockDualResult() {
+  const claimId = document.getElementById("img-claim-id").value || "CLM-MOCK-001";
+  const orderDate = document.getElementById("img-order-date").value || "2026-09-15";
+  const claimAmount = parseFloat(document.getElementById("img-claim-amount").value) || 2499;
+  const claimProduct = document.getElementById("img-claim-product").value || "Wireless Headphones";
+
+  // Randomized but plausible mock scores
+  const productScore = +(Math.random() * 0.45 + 0.05).toFixed(4);
+  const receiptScore = +(Math.random() * 0.5 + 0.1).toFixed(4);
+  const fusedScore = +(0.55 * productScore + 0.45 * receiptScore).toFixed(4);
+
+  const tier = fusedScore < 0.30 ? "auto_approve" : fusedScore < 0.65 ? "soft_friction" : "deny";
+
+  // Mock receipt OCR fields
+  const receiptDate = new Date(orderDate);
+  receiptDate.setDate(receiptDate.getDate() + Math.floor(Math.random() * 5) - 2);
+  const receiptDateStr = receiptDate.toISOString().split("T")[0];
+  const receiptTotal = claimAmount + (Math.random() > 0.6 ? Math.floor(Math.random() * 500) : 0);
+
+  const reasons = [];
+  if (productScore > 0.3) reasons.push("Compression artifact analysis (ELA) detected uneven error levels in product image");
+  if (receiptScore > 0.25) reasons.push("Character height variation in receipt exceeds normal thermal print range");
+  if (Math.abs(receiptTotal - claimAmount) > claimAmount * 0.1)
+    reasons.push(`Receipt total (₹${receiptTotal.toFixed(2)}) differs from claimed amount (₹${claimAmount.toFixed(2)}) by ${((Math.abs(receiptTotal - claimAmount) / claimAmount) * 100).toFixed(1)}%`);
+  if (reasons.length === 0) reasons.push("No fraud signals detected across product image and receipt");
+
+  return {
+    claim_id: claimId,
+    customer_id: "CUST_DASHBOARD",
+    fused_risk_score: fusedScore,
+    decision_tier: tier,
+    combined_reasons: reasons,
+    product_image_analysis: {
+      image_risk_score: productScore,
+      risk_flags: productScore > 0.3 ? [
+        { code: "COMPRESSION_ARTIFACT_DISCREPANCY", message: "ELA discrepancy detected in product image", severity: productScore },
+      ] : [],
+      manipulation_details: {
+        edge_analysis: { edge_inconsistency_score: +(Math.random() * 0.3).toFixed(4), edge_disparity_ratio: +(Math.random() * 8 + 2).toFixed(2) },
+        noise_analysis: { noise_inconsistency_score: +(Math.random() * 0.2).toFixed(4), noise_coef_variation: +(Math.random() * 0.6).toFixed(4) },
+        ela_analysis: { ela_discrepancy_score: +(Math.random() * 0.4).toFixed(4), ela_std_delta: +(Math.random() * 30 + 10).toFixed(2) },
+        overall_manipulation_score: productScore,
+      },
+    },
+    receipt_analysis: {
+      receipt_risk_score: receiptScore,
+      parsed_fields: {
+        merchant: "ShopMart Electronics",
+        date: receiptDateStr,
+        total_amount: receiptTotal,
+        line_items: [
+          { name: claimProduct, price: claimAmount * 0.85 },
+          { name: "GST 18%", price: +(claimAmount * 0.15).toFixed(2) },
+        ],
+        receipt_number: "RCT-" + Math.floor(Math.random() * 90000 + 10000),
+        payment_method: ["credit_card", "debit_card", "cash", "digital_wallet"][Math.floor(Math.random() * 4)],
+        ocr_confidence: +(Math.random() * 30 + 60).toFixed(1),
+      },
+      tampering_analysis: {
+        receipt_tampering_risk_score: +(receiptScore * 0.7).toFixed(4),
+        font_consistency_score: +(Math.random() * 0.3).toFixed(4),
+        alignment_regularity_score: +(Math.random() * 0.2).toFixed(4),
+        ela_compression_score: +(Math.random() * 0.25).toFixed(4),
+        ocr_confidence_variance_score: +(Math.random() * 0.2).toFixed(4),
+      },
+      cross_validation: {
+        cross_validation_risk_score: +(Math.random() * 0.4).toFixed(4),
+        checks_performed: 3,
+        mismatches_found: Math.random() > 0.5 ? 1 : 0,
+      },
+      ocr_summary: {
+        confidence: +(Math.random() * 30 + 60).toFixed(1),
+        word_count: Math.floor(Math.random() * 40 + 20),
+        raw_text: "ShopMart Electronics\n" + receiptDateStr + "\n" + claimProduct + "\n₹" + claimAmount.toFixed(2),
+        lines: ["ShopMart Electronics", receiptDateStr, claimProduct, "₹" + claimAmount.toFixed(2)],
+      },
+    },
+    fusion_weights: { product_image: 0.55, receipt: 0.45 },
+  };
+}
+
+
+// --- Render Results ---
+
+function renderDualResults(data) {
+  const results = document.getElementById("dual-analysis-results");
+  results.style.display = "block";
+
+  // Decision banner
+  const fusedScore = data.fused_risk_score;
+  const tier = data.decision_tier;
+  const bannerEl = document.getElementById("dual-decision-banner");
+  const decisionText = document.getElementById("dual-decision-text");
+  const fusedScoreEl = document.getElementById("dual-fused-score");
+
+  fusedScoreEl.textContent = fusedScore.toFixed(4);
+
+  const tierConfig = {
+    auto_approve: { text: "✅ AUTO APPROVE", color: "#3eddc8", bg: "rgba(62,221,200,0.1)", border: "rgba(62,221,200,0.3)" },
+    soft_friction: { text: "⚠️ MANUAL REVIEW", color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.3)" },
+    deny: { text: "🚫 DENY", color: "#ef4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.3)" },
+  };
+  const tc = tierConfig[tier] || tierConfig.soft_friction;
+  decisionText.textContent = tc.text;
+  decisionText.style.color = tc.color;
+  fusedScoreEl.style.color = tc.color;
+  bannerEl.style.background = `linear-gradient(135deg, ${tc.bg}, rgba(0,0,0,0.1))`;
+  bannerEl.style.borderColor = tc.border;
+
+  // Product score ring
+  const productScore = data.product_image_analysis?.image_risk_score || 0;
+  const productRing = document.getElementById("product-score-ring");
+  const productVal = document.getElementById("product-score-val");
+  const circumference = 314.16;
+  productRing.style.strokeDashoffset = circumference * (1 - productScore);
+  productRing.style.stroke = productScore > 0.65 ? "#ef4444" : productScore > 0.3 ? "#f59e0b" : "#3eddc8";
+  productVal.textContent = productScore.toFixed(2);
+
+  // Product flags
+  const productFlags = data.product_image_analysis?.risk_flags || [];
+  const productFlagsEl = document.getElementById("product-flags-container");
+  if (productFlags.length > 0) {
+    productFlagsEl.innerHTML = productFlags.map(f =>
+      `<div style="display:flex; align-items:flex-start; gap:6px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04);">
+        <span style="color:${f.severity > 0.5 ? '#ef4444' : '#f59e0b'}; font-size:10px; margin-top:2px;">●</span>
+        <div><span style="font-family:'JetBrains Mono'; color:#8d909f; font-size:0.7rem;">${f.code}</span><br>
+        <span style="color:#c3c6d6;">${f.message}</span></div>
+      </div>`
+    ).join("");
+  } else {
+    productFlagsEl.innerHTML = `<div style="color:#3eddc8; padding:8px; text-align:center;">✓ No manipulation or duplicate flags</div>`;
+  }
+
+  // Receipt score ring
+  const receiptScore = data.receipt_analysis?.receipt_risk_score || 0;
+  const receiptRing = document.getElementById("receipt-score-ring");
+  const receiptVal = document.getElementById("receipt-score-val");
+  receiptRing.style.strokeDashoffset = circumference * (1 - receiptScore);
+  receiptRing.style.stroke = receiptScore > 0.65 ? "#ef4444" : receiptScore > 0.3 ? "#f59e0b" : "#3eddc8";
+  receiptVal.textContent = receiptScore.toFixed(2);
+
+  // Receipt details
+  const receiptDetailsEl = document.getElementById("receipt-details-container");
+  const tampering = data.receipt_analysis?.tampering_analysis || {};
+  const crossVal = data.receipt_analysis?.cross_validation || {};
+  receiptDetailsEl.innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+      <div style="padding:6px 8px; background:rgba(0,0,0,0.2); border-radius:6px;">
+        <div style="font-size:0.65rem; color:#8d909f; text-transform:uppercase;">Font Consistency</div>
+        <div style="font-family:'JetBrains Mono'; color:#dfe2eb;">${(tampering.font_consistency_score || 0).toFixed(3)}</div>
+      </div>
+      <div style="padding:6px 8px; background:rgba(0,0,0,0.2); border-radius:6px;">
+        <div style="font-size:0.65rem; color:#8d909f; text-transform:uppercase;">Alignment</div>
+        <div style="font-family:'JetBrains Mono'; color:#dfe2eb;">${(tampering.alignment_regularity_score || 0).toFixed(3)}</div>
+      </div>
+      <div style="padding:6px 8px; background:rgba(0,0,0,0.2); border-radius:6px;">
+        <div style="font-size:0.65rem; color:#8d909f; text-transform:uppercase;">ELA Compression</div>
+        <div style="font-family:'JetBrains Mono'; color:#dfe2eb;">${(tampering.ela_compression_score || 0).toFixed(3)}</div>
+      </div>
+      <div style="padding:6px 8px; background:rgba(0,0,0,0.2); border-radius:6px;">
+        <div style="font-size:0.65rem; color:#8d909f; text-transform:uppercase;">Cross-Validation</div>
+        <div style="font-family:'JetBrains Mono'; color:#dfe2eb;">${(crossVal.cross_validation_risk_score || 0).toFixed(3)}</div>
+      </div>
+    </div>
+    <div style="margin-top:8px; padding:6px 8px; background:rgba(0,0,0,0.2); border-radius:6px; text-align:center;">
+      <span style="font-size:0.65rem; color:#8d909f;">Checks: ${crossVal.checks_performed || 0} performed, ${crossVal.mismatches_found || 0} mismatches</span>
+    </div>
+  `;
+
+  // OCR Fields
+  const parsedFields = data.receipt_analysis?.parsed_fields;
+  const ocrPanel = document.getElementById("ocr-fields-panel");
+  if (parsedFields) {
+    ocrPanel.style.display = "block";
+    const conf = parsedFields.ocr_confidence || data.receipt_analysis?.ocr_summary?.confidence || 0;
+    const confBadge = document.getElementById("ocr-confidence-badge");
+    confBadge.textContent = `OCR ${conf.toFixed(0)}%`;
+    confBadge.style.background = conf > 70 ? "rgba(62,221,200,0.15)" : conf > 50 ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)";
+    confBadge.style.color = conf > 70 ? "#3eddc8" : conf > 50 ? "#f59e0b" : "#ef4444";
+
+    const fieldsGrid = document.getElementById("ocr-fields-grid");
+    const fields = [
+      { label: "Merchant", value: parsedFields.merchant || "—", icon: "storefront" },
+      { label: "Date", value: parsedFields.date || "—", icon: "calendar_today" },
+      { label: "Total Amount", value: parsedFields.total_amount != null ? `₹${parsedFields.total_amount.toFixed(2)}` : "—", icon: "payments" },
+      { label: "Receipt #", value: parsedFields.receipt_number || "—", icon: "tag" },
+      { label: "Payment", value: (parsedFields.payment_method || "—").replace(/_/g, " "), icon: "credit_card" },
+      { label: "Items Found", value: (parsedFields.line_items || []).length + " items", icon: "list" },
+    ];
+    fieldsGrid.innerHTML = fields.map(f =>
+      `<div style="padding:10px; background:rgba(0,0,0,0.15); border-radius:8px; border:1px solid rgba(255,255,255,0.04);">
+        <div style="display:flex; align-items:center; gap:4px; margin-bottom:4px;">
+          <span class="material-symbols-outlined" style="font-size:14px; color:#d6baff;">${f.icon}</span>
+          <span style="font-size:0.65rem; color:#8d909f; text-transform:uppercase; font-weight:600;">${f.label}</span>
+        </div>
+        <div style="font-family:'JetBrains Mono'; font-size:0.85rem; color:#dfe2eb;">${f.value}</div>
+      </div>`
+    ).join("");
+
+    // Line items
+    const lineItemsEl = document.getElementById("ocr-line-items");
+    const items = parsedFields.line_items || [];
+    if (items.length > 0) {
+      lineItemsEl.innerHTML = `
+        <div style="font-size:0.7rem; color:#8d909f; text-transform:uppercase; font-weight:600; margin-bottom:6px;">Detected Line Items</div>
+        <table style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+          <thead><tr style="color:#8d909f; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <th style="text-align:left; padding:4px 8px; font-weight:600;">Item</th>
+            <th style="text-align:right; padding:4px 8px; font-weight:600;">Price</th>
+          </tr></thead>
+          <tbody>${items.map(item =>
+            `<tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+              <td style="padding:4px 8px; color:#dfe2eb;">${item.name}</td>
+              <td style="padding:4px 8px; text-align:right; color:#dfe2eb; font-family:'JetBrains Mono';">₹${item.price.toFixed(2)}</td>
+            </tr>`
+          ).join("")}</tbody>
+        </table>`;
+    } else {
+      lineItemsEl.innerHTML = "";
+    }
+  } else {
+    ocrPanel.style.display = "none";
+  }
+
+  // Combined reasons
+  const reasonsList = document.getElementById("combined-reasons-list");
+  const reasons = data.combined_reasons || ["No issues detected"];
+  reasonsList.innerHTML = reasons.map((r, i) =>
+    `<li style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); display:flex; align-items:flex-start; gap:8px;">
+      <span style="color:${r.includes("no fraud") || r.includes("No") ? '#3eddc8' : '#ffb4ab'}; font-weight:700; min-width:18px;">${i + 1}.</span>
+      <span>${r}</span>
+    </li>`
+  ).join("");
+
+  // Update the Fusion Engine slider if it exists
+  const fusionSlider = document.getElementById("image-score-slider");
+  if (fusionSlider) {
+    fusionSlider.value = Math.round(fusedScore * 100);
+    const valEl = document.getElementById("image-score-val");
+    if (valEl) valEl.textContent = fusedScore.toFixed(2);
+  }
+}
